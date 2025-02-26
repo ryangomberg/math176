@@ -1,0 +1,100 @@
+\documentclass[11]{article}
+
+\usepackage[utf8]{inputenc}
+
+\usepackage{mathpazo}
+\usepackage{amssymb,amsthm}
+\usepackage[fleqn]{amsmath}
+\usepackage[svgnames]{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[breakable,theorems,skins]{tcolorbox}
+% \usepackage{multirow}
+\usepackage[all]{xy}
+
+%lengths & spacing
+\allowdisplaybreaks
+\unitlength 1cm
+\textheight 22cm
+\textwidth 17cm
+\oddsidemargin -0.5cm
+\evensidemargin -0.5cm
+\topmargin -1.5cm
+\topskip 0cm
+\headheight 0.5cm
+\headsep 1cm
+%\marginparwidth 1.2cm
+\newlength\doubleind
+\addtolength{\doubleind}{\leftmargini}
+\addtolength{\doubleind}{\leftmarginii}
+\parindent 0pt
+\def\lstsp{\hspace{\labelsep}}
+
+\def\exstart{\hangindent\leftmargini\textup{1.}\hspace{\labelsep}}
+
+\newcommand\boldinline[1]{\paragraph{#1}}
+\newcommand\boldsubsection[1]{\subsection*{#1}}
+\newcommand\boldsubsubsection[1]{\subsubsection*{#1}}
+
+
+                      
+\newenvironment{enumeratea}{
+	\begin{enumerate}
+	  \renewcommand{\labelenumi}{(\alph{enumi})}}
+	{\end{enumerate}}
+
+
+%Theorems
+\tcbset{
+	defstyle/.style={enhanced, top=3pt, bottom=3pt, colframe=black, coltitle=black, arc=5pt, boxrule=1.5pt, left*=0pt, right*=0pt, theorem style=plain, terminator sign={.\ \ \ }, fonttitle=\bfseries\upshape, fontupper=\upshape, colback=blue!7!white, grow sidewards by=8pt, drop fuzzy shadow},
+	exstyle/.style={enhanced, breakable, beforeafter skip balanced=10pt, coltitle=black, theorem style=plain, terminator sign={.\ \ \ }, fonttitle=\bfseries\upshape, fontupper=\upshape, blanker, borderline west={4pt}{-8pt}{orange!75!white}},
+	thmstyle/.style={enhanced, top=3pt, bottom=3pt, colframe=black, coltitle=black, arc=5pt, boxrule=1.5pt,left*=0pt, right*=0pt, theorem style=plain, terminator sign={.\ \ \ }, fonttitle=\bfseries\upshape, fontupper=\slshape, colback=green!12!white, grow sidewards by=8pt, drop fuzzy shadow},
+	exercisestyle/.style={enhanced, breakable, beforeafter skip balanced=10pt, coltitle=black, theorem style=plain, terminator sign={.\ \ \ }, fonttitle=\bfseries\upshape, fontupper=\upshape, blanker, borderline west={4pt}{-8pt}{purple!75!white}, title={Exercises\ \ \ }},
+	proofstyle/.style={enhanced, breakable, beforeafter skip balanced=10pt, blanker, borderline west={4pt}{-8pt}{green!50!white}},
+	asidestyle/.style={enhanced, breakable, beforeafter skip balanced=10pt, blanker, borderline west={4pt}{-8pt}{black!50!white}},
+	exercisestyle2/.style={enhanced, breakable, beforeafter skip balanced=10pt, coltitle=black, theorem style=plain, terminator sign={.\ \ \ }, fonttitle=\bfseries\upshape, fontupper=\upshape, blanker, borderline west={4pt}{-8pt}{purple!75!white}, title={Exercises\ \thesubsection.\ \ \ }},
+	exercisestyle4/.style={enhanced, breakable, beforeafter skip balanced=10pt, coltitle=black, theorem style=plain, terminator sign={.\ \ \ }, fonttitle=\bfseries\upshape, fontupper=\upshape, blanker, borderline west={4pt}{-8pt}{purple!75!white}, title={Exercises\ \thesection.\ \ \ }},
+	exercisestyle3/.style={enhanced, breakable, beforeafter skip balanced=10pt, coltitle=black, theorem style=plain, terminator sign={.\ \ \ }, fonttitle=\bfseries\upshape, fontupper=\upshape, blanker, borderline west={4pt}{-8pt}{purple!75!white}, title={Exercise\quad}},
+	conjstyle/.style={enhanced, top=3pt, bottom=3pt, colframe=black, coltitle=black, arc=5pt, boxrule=1.5pt,left*=0pt, right*=0pt, theorem style=plain, terminator sign={.\ \ \ }, fonttitle=\bfseries\upshape, fontupper=\slshape, colback=red!12!white, grow sidewards by=8pt, drop fuzzy shadow},
+	}
+
+\tcolorboxenvironment{proof}{breakable,proofstyle}
+
+\newtcbtheorem[number within=section]{defn}{Definition}{defstyle}{defn}
+\newtcbtheorem[use counter from=defn]{example}{Example}{exstyle}{ex}
+\newtcbtheorem[use counter from=defn]{examples}{Examples}{exstyle}{ex}
+\newtcbtheorem[use counter from=defn]{thm}{Theorem}{thmstyle}{thm}
+\newtcbtheorem[use counter from=defn]{lemm}{Lemma}{thmstyle}{lemm}
+\newtcbtheorem[use counter from=defn]{cor}{Corollary}{thmstyle}{cor}
+\newtcbtheorem[use counter from=defn]{axiom}{Axiom}{defstyle}{axiom}
+\newtcbtheorem[use counter from=defn]{axioms}{Axioms}{defstyle}{axioms}
+\newtcbtheorem[use counter from=defn]{conj}{Conjecture}{conjstyle}{conj}
+
+\newtcolorbox{aside}{asidestyle}
+\newtcolorbox{exercises*}{exercisestyle}
+\newtcolorbox{exercises}{exercisestyle2}
+\newtcolorbox{exercisessec}{exercisestyle4}
+\newtcolorbox{exercise}{exercisestyle3}
+
+\begin{document}
+\begin{example}{}{ex}
+Suppose a call option is priced at \$30 under the volatility $\sigma = 0.2$, strike price $E = \$40$ and stock price $S = \$50$. If there is one year until expiration, use the Black-Scholes pricing model to determine the prevailing risk-free rate.\\
+\vspace{2mm}
+
+Recall that a call option is priced using the solution to the Black-Scholes equation:
+$$C_E (S, t) = S \mathcal{N}(d_1) - Ee^{-r(T - t)} \mathcal{N}(d_2).$$
+where $$d_1 = \frac{\ln \left(\frac{S}{E}\right) + \left(r + \frac{\sigma^2}{2} \right)(T - t)}{\sigma \sqrt{T - t}}, \hspace{5mm} d_2 = \frac{\ln \left(\frac{S}{E}\right) + \left(r - \frac{\sigma^2}{2} \right)(T - t)}{\sigma \sqrt{T - t}}.$$
+Plugging in our known values,
+$$30 = 50\mathcal{N}(d_1) - 40e^{-r} \mathcal{N}(d_2), \hspace{5mm} d_1 = \frac{\ln (1.25) + \left(r + \frac{1}{50}\right)}{.2} = 5\left[\ln (1.25) + r + \frac{1}{50} \right], \hspace{5mm} d_2 = 5\left[\ln (1.25) + r - \frac{1}{50} \right]$$
+We can rewrite this expression as a function of $r$ and set it equal to $C = 30$:
+$$30 = 50\int_{-\infty}^{d_1} e^{-.5r^2} dx - 40e^{-r} \int_{-\infty}^{d_2} e^{-.5r^2} dx.$$
+Using a graphing calculator roughly yields $r \approx 4\%$.\\
+\end{example}
+
+\begin{defn}{}{greeks}
+Let $C_E (S, t)$, $P_E (S, t)$ be European Call and Put options following the Black-Scholes model. The \textit{Greeks} are a set of partial derivatives of $C$ with respect to different variables in the model. More precisely,
+$$\text{Delta}: \Delta_C = \frac{\partial C}{\partial S} = \mathcal{N}(d_1), \hspace{5mm} \Delta_P = \frac{\partial P}{\partial S} = -\mathcal{N}(-d_1)$$
+$$\text{Theta}:  \theta_C = \frac{\partial C}{\partial t} = -rEe^{-r(T - t)}\mathcal{N}(d_2) - \frac{1}{2}\frac{\sigma}{\sqrt{T - t}}S\mathcal{N}(d_1), \hspace{5mm} \theta_P = \frac{\partial P}{\partial t} = rEe^{-r(T - t)}\mathcal{N}(-d_2) - \frac{\sigma}{2\sqrt{T - t}}S\mathcal{N}(d_1).$$
+$$\text{Vega}: \nu_C = \frac{\partial C}{\partial \sigma} = SN'(d_1)\sqrt{\tau}, \hspace{5mm} \nu_P = \frac{\partial P}{\partial \sigma} = SN'(d_1)\sqrt{\tau}$$
+\end{defn}
+\end{document}
