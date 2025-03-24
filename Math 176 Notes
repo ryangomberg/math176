@@ -1,0 +1,1368 @@
+\begin{document}
+\setlist{nolistsep,leftmargin=*}
+\pagestyle{fancy}
+\fancyhead[L]{Ryan Gomberg}
+\fancyhead[C]{Math 176 Notes (Math of Finance)}
+\fancyhead[R]{Page \thepage \hspace{0.2mm} of 51}
+\definecolor{myblue}{RGB}{0,163,243}
+
+\begin{flushleft}
+\section{Introduction to Arbitrage}
+The goal of this section is to identify moments of profit without risk. After all, any such opportunities are rare and most financial scenarios assume fairness between both parties. Managing portfolios is all about optimizing profit with the lowest risk possible. The following definitions summarize our motivation:\\
+\vspace{1mm}
+\begin{defn}{}{arbhedge}
+\textit{Arbitrage} is profit without risk, or taking advantage of a difference in price between multiple markets. \textit{Hedging} a portfolio involves managing bets or investments to eradicate risk.
+\end{defn}
+\vspace{1mm}
+We will look at cases where simple arbitrage opportunities present themselves. 
+\subsection{Sports Betting}
+\textit{Odds}, defined by the ratio between the amounts staked by parties, is what underlines a bet. Odds are not constructed arbitrarily, but rather based on expected probability. If one team is more favored, their odds go up.\\
+\vspace{1mm}
+\begin{itemize}
+\item{A party that offers 3:2 odds implies that they believe their team has a higher chance of winning. If they win, you lose the money spent on the bet. If they lose, you gain 150\% of the initial bet.\\
+\vspace{1mm}}
+\item{Of course, higher odds are less favorable, should you choose to accept such a bet. However, if you win the bet, the returns are much higher.\\
+\vspace{2mm}}
+\end{itemize}
+If we are given multiple bets, how should manage our money?\\
+\vspace{1mm}
+\begin{example}{}{sports}
+Two people have different opinions on the UCI vs. UCSD basketball game to be played tonight. One person supports UCI and is willing to offer 11:10 odds; the other person supports UCSD and is willing to offer 5:3 odds. Determine how much you should bet with each person. If you have \$100 to invest, how much are you assured of earning?\\
+
+The solution to this problem is no more than a system of two linear inequalities. Suppose you bet $x$ dollars to the UCI fan. Then, you bet $100 - x$ to the UCSD fan. We can summarize our earnings and losses in the below table:
+\begin{center}
+\begin{tabular}{|c|r|r|r|}
+	\hline
+	 & UCI Wins & UCLA Wins \\\hline
+	UCI Fan & $-x$ & 1.1$x$ \\\hline
+	UCLA Fan & $\displaystyle \frac{5}{3}(100 - x)$ & $-(100 - x)$ \\\hline
+\end{tabular}
+\end{center}
+We derive two profit conditions: one for each team.
+$$\text{UCI Wins: } -x + \frac{5}{3}(100 - x) > 0 \Longrightarrow 100 - x > \frac{3}{5}x \Longrightarrow x < 62.5.$$
+$$\text{UCLA Wins: } 1.1x - 100 + x > 0 \Longrightarrow 2.1x > 100 \Longrightarrow x > 47.62.$$
+These inequalities suggest that we earn money if $x > 46.72$ AND if $x < 62.5$. Betting some amount of $x$ within this region guarantees us profit regardless of the outcome! Rather than setting each condition as inequalities, what if we set the two profit conditions equal to each other? 
+$$2.1x^* - 100 = \frac{500}{3} - \frac{8}{3}x^* \Longleftrightarrow x^* = 55.94.$$
+By setting these equations equal to each other, we are no longer guessing our earnings. Plug in $x^*$ into either profit condition and find that, if we bet $\$55.94$ to the UCI Fan and $\$44.06$ to the UCLA Fan, we are guaranteed of earning $p^* = \$17.47$, regardless of the outcome. 
+\begin{center}
+\includegraphics[width = 0.6\textwidth]{sportsbet}
+\end{center}
+Notice how the region of profit is between where the \textcolor{blue}{blue} and \textcolor{red}{red} lines cross the $x$-axis. Our maximum profit within this region is if we bet $x = 47.62$ to the UCI fan. If they lose, we earn \$39.68. If they win, we break even. 
+\end{example}
+We can generalize the results from the previous exercise to more than two counterparties:\\
+\vspace{1mm}
+\begin{thm}{}{multiplebets}
+Let $O_1 : 1, O_2 : 1, \cdot \cdot \cdot, O_n : 1$ be the odds offered for $n$ mutually exclusive outcomes, and let $N$ be the total amount to bet. The optimal bet amount on outcome $i$, denoted by $x_i^*$, and the guaranteed profit, denoted by $p^*$, are given by
+
+$$x_i^* = \frac{N}{\sum_{j = 1}^n \frac{1}{1 + O_j}} \cdot \frac{1}{1 + O_i} \hspace{5mm} p^* = N\left(\frac{\prod_{i = 1}^n (1 + O_i)}{\sum_{j = 1}^n \prod_{k \neq j}(1 + O_k)} - 1 \right)$$
+An arbitrage opportunity exists if and only if
+$$\sum_{i = 1}^n \frac{1}{1 + O_i} < 1.$$
+\end{thm}
+\pagebreak
+In the case of Example 1.2, where there are only two counterparties $A$ and $B$, the expressions in Theorem 1.3 reduce to
+$$x^* = \frac{N(1 + O_B)}{2 + O_A + O_B}, \hspace{5mm} p^* = \frac{N(O_A O_B - 1)}{2 + O_A + O_B}.$$
+We can verify that we indeed obtain the same values using this formula. Additionally, the ones presented in the Theorem save us the trouble of solving multiple systems of equations. Generally, it is easier to program a function that achieves this. Refer to the \textbf{code} section at the end of the notes for an optimal bets function coded in MATLAB.\\
+
+\vspace{2mm}
+\textit{Remark}: If do not wish to eliminate all risk, but instead, not lose more than $p$ dollars no matter what happens. Then, we could set the inequalities in a new way:
+$$\text{UCI Wins: } -x + \frac{5}{3}(100 - x) > -p$$
+$$\text{UCLA Wins: } 1.1x - 100 + x > -p$$
+
+\subsection{Probability Review: Part I}
+Next, we present an overview of standard definitions from probability theory:\\
+\vspace{2mm}
+\begin{defn}{}{expval}
+Suppose $\lbrace X \rbrace_{i = 1}^n $ is a discrete random variable that takes on values $\lbrace x_1, x_2, \cdot \cdot \cdot , x_n \rbrace$ with probabilities $\lbrace p_1, p_2, p_3, \cdot \cdot \cdot, p_n \rbrace$ such that $\sum_{i = 1}^n p_n = 1.$ Then, the \textit{expected value} of $X$, or $E[X]$, is given by
+$$E[X] = \sum_{i = 1}^n x_i p_i.$$
+\end{defn}
+\begin{example}{}{expval2}
+Suppose we roll a fair die numbered 1 to 6. What is the expected value of one roll?\\
+
+The probability of rolling any number is $\frac{1}{6}$. So, $\lbrace X \rbrace_{i = 1}^n = \lbrace 1, 2, 3, 4, 5, 6 \rbrace$ with probabilities $\left\{ \frac{1}{6}, \frac{1}{6}, \frac{1}{6}, \frac{1}{6}, \frac{1}{6}, \frac{1}{6} \right\}.$ Then,
+
+$$E[X] = \sum_{i = 1}^6 x_i p_i = \frac{1}{6} + \frac{2}{6} + \frac{3}{6} + \frac{4}{6} + \frac{5}{6} + \frac{6}{6} = \frac{21}{6} = \frac{7}{2}.$$
+
+This does not really give us much information. Suppose we rolled a fair die 100 times and computed the sum. What is the expected value?
+
+$$100E[X] = 700.$$
+
+So, if we roll a die 100 times, the sum of each number is most likely to be 700.
+\end{example}
+
+\begin{defn}{}{var}
+Suppose $\lbrace X \rbrace_{i = 1}^n $ is a discrete random variable that takes on values $\lbrace x_1, x_2, \cdot \cdot \cdot , x_n \rbrace$ with probabilities $\lbrace p_1, p_2, p_3, \cdot \cdot \cdot, p_n \rbrace$ such that $\sum_{i = 1}^n p_n = 1.$ Then, the \textit{variance} of $X$, or \text{Var}$(X)$, is given by
+$$\text{Var}(X) = E[X^2] - (E[X])^2.$$
+Here $E[X^2] = \sum_{i = 1}^n x_i^2 p_i.$ Additionally, for $a, b \in \mathbb{R}$,
+$$\text{Var}(aX + b) = a^2 \text{Var}(X).$$
+\end{defn}
+\begin{example}{}{var2}
+What is the variance of a fair die, numbered 1 to 6, when rolled once? When rolled 100 times?\\
+
+When rolled once, 
+$$E[X^2] = \frac{1}{6} \left(1^2 + 2^2 + 3^2 + 4^2 + 5^2 + 6^2 \right) = \frac{91}{6}, \hspace{5mm} (E[X])^2 = \left(\frac{7}{2}\right)^2 = \frac{49}{4}$$
+$$\Longrightarrow \text{Var}(X) = \frac{91}{6} - \frac{49}{4} = \frac{35}{12}.$$
+When rolled 100 times,
+$$100\text{Var}(X) = \frac{875}{3}.$$
+\end{example}
+
+\begin{defn}{}{z}
+Let $X$ be a random variable with mean $\mu = E[X]$ and variance $\sigma^2 = \text{Var}(X)$. The standard form of a random variable, $Z$, is given by
+$$Z = \frac{X - \mu}{\sigma}.$$
+With this transformation, $E[Z] = 0$ and $\text{Var}(Z) = 1.$ Note that $\sigma$ is the standard deviation given by $\sqrt{\text{Var}(X)} = \sigma.$
+\end{defn}
+\begin{proof}
+By construction, we have
+$$E[Z] = E\left(\frac{X - E[X]}{\sigma} \right) = \frac{1}{\sigma} E(X - E[X]) = \frac{1}{\sigma} (E[X] - E[X]) = 0.$$
+$$\text{Var}(Z) = E(Z^2) - \underbrace{(E[Z])^2}_{= 0} = E \left(\frac{X - E(X)}{\sigma} \right)^2 = E \left(\frac{X^2 - 2XE(X) + (E(X))^2}{\sigma^2} \right)$$
+$$ = \frac{1}{\sigma^2} E(X^2 - (E(X)^2)) = \frac{1}{\sigma^2} \cdot \sigma^2 = 1.$$
+\end{proof}
+\begin{example}{}{z2}
+Standardize the random variable given by rolling a fair die once and 100 times.
+$$\text{Once: } \hspace{3mm} Z = \frac{X - 3.5}{3.5}, \hspace{5mm} \text{100 times: } \hspace{3mm} Z = \frac{X - \frac{35}{12}}{\sqrt{\frac{875}{3}}} = \frac{X - 2.92}{17.08}.$$
+\end{example}
+The definitions we have given up to this point help us introduce a broader behavior of random variables.
+
+\begin{defn}{}{normdist}
+\raggedright
+A standardized random variable $z$, with mean $\mu$ and variance $\sigma$ that is \textit{normally distributed} follows a bell-shaped curve and satisfies the following:
+\begin{minipage}[t]{0.52\linewidth}\vspace{-1pt}
+\vspace{1mm}
+$$f(z) = \frac{1}{\sqrt{2\pi}} e^{-\frac{z^2}{2}}$$
+$$P(z \leq z_0) = \int_{-\infty}^{z_0} f(z)dz = \mathcal{N}(z_0)$$
+$$\int_{-\infty}^{\infty} f(z)dz = 1$$
+\end{minipage}
+\begin{minipage}[t]{0.45\linewidth}\vspace{-4pt}
+\includegraphics[width=0.9\textwidth]{newranddist}
+\end{minipage}\\
+Recall that $z = \frac{X - \mu}{\sigma}$. This is formerly known as the \textit{standard normal distribution}. Mathematically, we say $z \sim \mathcal{N}(\mu, \sigma^2)$.
+\end{defn}
+\vspace{1mm}
+\begin{itemize}
+\item{$\mu$, or the mean, shifts the normal distribution curve. If $\mu = 2$, then the center of the bell curve is at $z = 2$.\\
+\vspace{1mm}}
+\item{$\sigma$, or the variance, narrows or widens the spread of the curve. A normal distribution with variance $\sigma = 4$ will be wider and have a lower peak.\\
+\vspace{1mm}}
+\item{A normal distribution is symmetric with respect to the mean $\mu$. So, $P(z \leq 0) = P(z \geq 0) = 0.5$.\\
+\vspace{1mm}}
+\end{itemize}
+The graph below shows a set of different normal distributions, capturing the ideas mentioned above.\\
+\end{flushleft}
+\begin{center}
+\includegraphics[width = 0.52\textwidth]{normdists}
+\end{center}
+\begin{flushleft}
+\begin{defn}{}{clt}
+When independent, identically distributed random variables are added, their sum tends toward a normal distribution regardless of how the original variables are distributed. This is the \textit{Central Limit Theorem}.
+\end{defn}
+
+\textit{Remark}: Generally, we take $n \geq 30$ iterations to assume that the real distribution is normal.
+
+\begin{example}{}{diceprob3}
+We revisit the die problem from earlier. The normal distribution representation of each (one roll vs. 100 rolls) are shown below:
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\textwidth]{dieprob1}
+\hspace{3mm}
+\includegraphics[width=0.48\textwidth]{dieprob2}
+\end{figure}
+Pay close attention to the mean and peaks between these two curves, namely the scale on each axis. The normal distribution for the red curve is actually flatter and wider to account for the large variance. We cannot generalize any results for the blue curve because we are only rolling the die a single time. Additionally, we cannot assume that outcome for rolling a single die follows a normal distribution from the Central Limit Theorem.
+\end{example}
+
+We can use apply the notion of normal distributions to measure the likelihood of an outcome.\\
+\vspace{1mm}
+\begin{example}{}{likelihood}
+Suppose you have a fair die. You are playing a game where, if a 1 or 2 appears, you win $\$1$. If a 3, 4, 5 appears, you win $\$2$. If you roll a 6, you lose $\$4$. If the game is played 90 times, what is the likelihood of winning at least \$50?\\
+
+First, we want to compute the expectation and variance of $X$.
+$$E[X] = \left(\frac{1}{6} + \frac{1}{6}\right) + 2 \cdot \left(\frac{1}{6} + \frac{1}{6} + \frac{1}{6} \right) - 4 \cdot \frac{1}{6} = \frac{2}{3}$$
+$$\text{Var}(X) = E[X^2] - (E[X])^2 = \left(\frac{1}{3} + \frac{1}{2} \cdot 2^2 + \frac{1}{6} \cdot 4^2 \right) - \frac{4}{9} = \frac{41}{9}$$ 
+Define $Y$ as the random variable of playing the game $X$ 90 times. So, $E[Y] = 60$ and $\text{Var}(Y) = 410$.\\
+
+The likelihood of winning at least $\$50$ is given by
+$$P(Y \geq 12) = P\left(\frac{Y - E[Y]}{\sigma_{Y}} \right) = P \left(Z \geq -\frac{10}{\sqrt{410}} \right)$$
+Plugging into the Normal distribution curve gives
+$$\int_{-\frac{-10}{\sqrt{410}}}^{\infty} \frac{1}{\sqrt{2\pi}} e^{-\frac{1}{2}z^2}dz \approx 0.6893 = 68.93\%.$$
+\end{example}
+
+\begin{defn}{}{contrandvar}
+A \textit{continuous random variable} $x$ is characterized by its \textit{probability density function} (PDF) $f(x)$ which satisfies
+$$P(a \leq x \leq b) = \int_a^b f(x) dx \hspace{5mm} \text{and} \hspace{5mm} \int_{-\infty}^{\infty} f(x)dx = 1$$
+\end{defn}
+
+\begin{example}{}{pdf1}
+Let the PDF for a random variable $x$ be given by
+$$f(x) = \begin{cases}
+0 & \text{ if } -\infty < x < 0\\
+Cx & \text{ if } 0 \leq x \leq 3\\
+0 & \text{ if } x > 3\\
+\end{cases}$$
+Find the value of $C$ such that this is a probability distribution.
+$$\int_{-\infty}^{\infty} f(x) = \int_0^3 Cx dx = \frac{C}{2} [x^2]_{x = 0}^{x = 3} = 1 \Longrightarrow C = \frac{2}{9}.$$
+\end{example}
+\begin{thm}{}{expvarcont}
+Let $X(x)$ be a random variable with $f(x)$ as the PDF. The expected value and variance of $X$ is
+$$E[X] = \int_{-\infty}^{\infty} X(x) f(x) dx, \hspace{5mm} \text{Var}(X) = E[X^2] - (E[X])^2$$
+where
+$$E[X^2] = \int_{-\infty}^{\infty} [X(x)]^2 f(x) dx$$
+\end{thm}
+
+\begin{example}{}{varcont}
+Use the PDF from Example 1.15. If $X(x) = x$ is the random variable giving the value of the selected number, what is $E[X]$? $\text{Var}(X)$?\\
+
+We have that $f(x) = \displaystyle \frac{2}{9} x$.
+$$E[X] = \frac{2}{9} \int_0^3 x^2 dx = \frac{2}{9} \cdot \frac{1}{3} [x^3]_0^3 = 2 \Longrightarrow (E[X])^2 = 4$$
+$$E[X^2] = \frac{2}{9} \int_0^3 x^3 dx = \frac{2}{9} \cdot \frac{1}{4} [x^4]_0^3 = \frac{9}{2}$$
+$$\Longrightarrow \text{Var}(X) = \frac{9}{2} - 4 = \frac{1}{2}.$$
+\end{example}
+\subsection{Fair Bets and Horse Betting}
+We apply some results from the previous section to betting.
+
+\begin{thm}{}{fairbet}
+A \textit{fair bet} occurs when the expected value of the winnings between two parties is zero. The \textit{implied probability} that a team wins is derived from a fair bet. Generally, if Fan A offers a fair bet with odds $O_A : 1$, we have
+$$P_A (A) = \frac{O_A}{1 + O_A}.$$
+\end{thm}
+\begin{proof}
+Let $0 \leq P(W) \leq 1$ be the probability in which your team wins and $1 - P(W)$ the probability in which your team loses. Then,
+$$W = \begin{cases}
+-1 & \text{ your team loses}\\
+O_A & \text{ your team wins}\\
+\end{cases}$$
+In a fair bet, we want the expected winnings $E[W]$ to be zero.
+$$E[W] = -(1 - P(W)) + O_A P(W) = 0 \Longleftrightarrow P(W) - 1 + O_A P(W) = 0$$
+$$\Longleftrightarrow P(W)(1 + O_A) = 1 \Longleftrightarrow P(W) = \frac{1}{1 + O_A}.$$
+The implied probability of losing is $1 - P(W)$:
+$$1 - P(W) = 1 - \frac{1}{1 + O_A} = \frac{O_A}{1 + O_A}.$$
+\end{proof}
+To close this section, we look at horse betting. \\
+
+Odds in horse racing are computed as such:
+\vspace{1mm}
+\begin{itemize}
+\item{Victory probabilities are computed as the fraction of the total dollars wagered on each horse. They serve to measure the aggregate consensus of all betters at the track.\\
+\vspace{1mm}}
+\item{The track wishes to earn $x$ cents on each dollar bet, independent of what happens in the race.\\
+\vspace{1mm}}
+\item{The odds/payoff for each horse is computed by setting the total revenue for each horse to $x$.}
+\end{itemize}
+
+\begin{example}{}{horsebetting}
+Suppose at an off-track betting facility, just before the four horse race starts, it is learned that 400 dollar bets have been made on $A$, 200 on $B$, 300 on $C$, and 100 on $D$. In order for the owner to earn 4 cents on each dollar bet, determine the payoff for each horse.\\
+
+If $O_A, O_B, O_C, O_D$ are the odds of each horse winning, then\\
+\vspace{2mm}
+
+\begin{center}
+\begin{tabular}{|c|r|r|r|r|r|r|}
+	\hline
+	Winner & Revenue A & Revenue B & Revenue C & Revenue D & Total Revenue \\\hline
+	A & $-400 O_A $ & $+200$ & $+300$ & $+100$ & $600 - 400O_A$ \\\hline
+	B & $+400$ & $-200 O_B$ & $+300$ & $+100$ & $800 - 200O_B$ \\\hline
+	C & $+400$ & $+200$ & $-300 O_C$ & $+100$ & $700 - 300O_C$ \\\hline
+	D & $+400$ & $+200$ & $+300$ & $-100O_D$ & $900 - 100O_D$ \\\hline
+\end{tabular}
+\end{center}
+\vspace{2mm}
+
+For each row, we set the total revenue equal to the money the track earns per dollar bet, and then solve for each probability. We obtain
+$$600 - 400O_A = 0.04(100 + 200 + 300 + 400) \Longrightarrow 600 - 400_A = 40 \Longrightarrow O_A = 1.4.$$
+We can set the other total revenue expressions equal to $400$ to obtain the payoffs for $B, C, D$:
+$$O_B = 2, O_C = 1, O_D = 5$$
+
+Hence the payoff for each horse is \$1.40 for A, \$2.00 for B, \$1.00 for C, and \$5.00 for D.
+\end{example}
+Code that solves any horse betting problem can also be found in the \textbf{code} section.
+\pagebreak
+\section{Introduction to Options and Stocks}
+\subsection{Options and Stocks}
+At every moment, stocks are always susceptible to change. While these fluctuations are often subtle, most quantitative traders cannot predict any outcome, even dramatic changes in stock prices. Here, we only provide a simple heuristic for thinking about option pricing, which hopefully gets us one foot in the door into optimally managing stocks. We begin with some definitions that underline the relationship between consumers and sellers in the market:\\
+\vspace{2mm}
+\begin{defn}{}{options}
+\textit{Options} are financial derivatives that give the buyer the \textit{right} the right to buy or sell an underlying asset at a pre-agreed price at a future date. Options are purchased at the price the shorter sets, or the \textit{premium}. One cannot use the option until the premium is paid in full.
+\begin{enumerate}
+\item{\textit{Longing} an option gives you the right to buy the asset and \textit{shorting}, or selling, an option means you are selling rights to the counterparty with an obligation to fulfill.}
+\item{\textit{Call} options allows the buyer the right to \textit{purchase} the asset at the pre-agreed price any time before the expiration date; \textit{put} options allows the buyer the right to \text{sell} the asset at the pre-agreed price any time before the expiration date.}
+\end{enumerate}
+The pre-agreed price is referred to as the \textit{strike price.}
+\end{defn}
+\vspace{2mm}
+Keep in mind that when we long an option, we are not obligated to buy or sell the asset at any point. In fact, if the price of the stock changes such that we are at a loss by buying or selling, it is recommended to not take action and let the option go through. When this happens, we say the option \textit{expires worthless}.\\
+\vspace{2mm}
+Combining the notion of longing/shorting and calls/puts gives us four different types of option pricing:\\
+\vspace{2mm}
+\begin{defn}{}{longcall}
+Longing a call is the right to \textit{exercise} a purchase of the stock at price $E$. Only exercise your right if the stock price exceeds the strike price $(S > E)$. The maximum possible loss is the premium.
+$$C_E (S, t) = \text{max} (0, S - E).$$
+\end{defn}
+\vspace{2mm}
+Generally, long calls are the safest option to invest in as your possible returns are boundless. If the stock price falls below the strike price, you let the option expire worthless and only lose the premium you paid for. We can construct a graph (porfolio value vs. stock price) to better understand the relationship. Here the $x$-axis and $y$-axis depict the price of the stock price and
+\begin{minipage}[t]{0.55\linewidth}\vspace{0pt}
+portfolio value at the expiration date, respectively. So long as $S > E$, you are making profit. If $E < S$, the option expires worthless. The graph assumes there is no premium.
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.42\linewidth}\vspace{-4pt}
+\includegraphics[width=0.9\textwidth]{Longcall}
+\end{minipage}\\
+\vspace{1mm}
+\begin{defn}{}{shortcall}
+Shorting a call is selling the call option to a buyer. You are obligated to purchase the price at the current stock price if the buyer exercises their right to do so.
+$$-C_E (S, t) = -\text{max} (0, S - E).$$
+\end{defn}
+\vspace{2mm}
+People who short calls are typically very knowledgeable in quantitative trading as the potential for loss is significant. They hope that the stock price decreases so that they can repurchase the stock at a lower price (since the option will expire worthless). Otherwise, if it goes above $E$, the buyer can choose to buy the stock $S$ at price $E$ and they must buy at the current price $S$. This can yield unlimited loss for the seller. The maximum profit is the premium.\\
+\begin{minipage}[t]{0.55\linewidth}\vspace{-1pt}
+One can easily observe that the portfolio value for a short call is the reflection of a long call along the $x$-axis.
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.4\linewidth}\vspace{-4pt}
+\includegraphics[width=0.9\textwidth]{Shortcall}
+\end{minipage}\\
+\vspace{1mm}
+\begin{defn}{}{longput}
+Longing a put option means you have the obligation to sell the stock at the strike price. 
+$$P_E = \text{max}(0, E - S).$$
+\end{defn}
+\vspace{2mm}
+One expects the stock price to go down and profit when the stock price is less than the stirke price (because you own the right to sell a cheaper stock for a greater price). The maximum profit is the strike price minus the premium and the maximum loss is the premium.\\
+\begin{minipage}[t]{0.57\linewidth}\vspace{-1pt}
+Judging by the graph, we want to let the option expire worthless if $S \geq E$. For $S < E$, we can sell the stock at the strike price $=$ profit!
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.42\linewidth}\vspace{-4pt}
+\includegraphics[width=0.9\textwidth]{Longput}
+\end{minipage}\\
+\vspace{1mm}
+\begin{defn}{}{shortput}
+Shorting a put means you are obligated to buy the stock at the strike price if the buyer exercises that right.
+$$-P_E = -\text{max}(0, E - S)$$
+\end{defn}
+\vspace{2mm}
+You are expecting the stock price to go up and profit when the stock price is greater than the strike price (so the option expires worthless). On the other hand, if it is less tan the strike price, then the buyer will exercise the option and you must buy the stock at the underlying strike price. The maximum loss is the cost of the strike price and maximum profit is the premium.\\
+\vspace{1mm}
+\begin{minipage}[t]{0.57\linewidth}\vspace{-1pt}
+As with long and short calls, the graph of a short put is the reflection of a long put along the $y$-axis.
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.42\linewidth}\vspace{-4pt}
+\includegraphics[width=0.9\textwidth]{Shortput}
+\end{minipage}\\
+\subsection{Constructing a Portfolio}
+We have overviewed the four main types of options pricing. In general, we can express any portfolio as a linear combination of these. Before we proceed, let us go over general notation. For puts and calls, we express them as $C_E, P_E$, where $E$ is the underlying strike price of the option. We often define portfolios for an asset as one with calls and puts for multiple strike prices. The next example will highlight this type of portfolio:\\
+\vspace{2mm}
+\begin{defn}{}{longstrangle}
+\raggedright
+Long strangles are the linear combination of longing a put at strike price $E_1$ and longing a call at a different strike price $E_2.$
+\begin{minipage}[t]{0.52\linewidth}\vspace{-1pt}
+\vspace{7mm}
+$$\text{Portfolio Value} = P_{E_1} + C_{E_2}.$$
+\end{minipage}
+\begin{minipage}[t]{0.45\linewidth}\vspace{-4pt}
+\includegraphics[width=0.9\textwidth]{Longstranglebg}
+\end{minipage}\\
+\end{defn}
+Long Strangles are another safe portfolio; our loss is restricted to the two premiums we paid for. Investors profit from long strangles when the stock falls below $E_1$ or above $E_2$.\\
+\end{flushleft}
+
+\begin{example}{}{portfolio}
+\begin{flushleft}
+We continue with a more complicated example. Below is a portfolio with multiple strike prices and the corresponding portfolio value at expiration:
+\end{flushleft}
+\begin{center}
+\includegraphics[width=0.9\textwidth]{portex}
+\end{center}
+\begin{flushleft}
+First, we will describe the portfolio using only call options. The numbers in parentheses indicate the slopes of each line in our piecewise-defined graph. This is important in keeping track of the changes in slope as the stock price increases (or decreases).\\
+\vspace{2mm}
+\begin{enumerate}
+\item{From $0 \leq S \leq 50$, the slope is zero. No call options are bought in this interval.}
+\item{From $50 \leq S \leq 60$, the slope is $-6$. At this point the graph resembles that of shorting 6 calls with a strike price of \$50. For every dollar the stock rises above \$50, we are losing \$6. If our portfolio ended here, we could potentially suffer an infinite loss, as seen from the blue dashed line pointing downward.}
+\item{A wise investor would not let this happen. Therefore, they buying 6 call options at the strike price \$60. While we are still losing money from shorting $C_{50}$, we are gaining money from $C_{60}$ if the stock price rises above \$60. Hence, the \$6 lost for every dollar increase in stock from shorting the previous option is offset by the \$6 gained for every dollar increase from calling this new option. The slopes cancel out as seen by the blue dashed lines.}
+\item{Here, the portfolio value goes up, which is only achieved by longing 4 call options, this time at strike price \$80. We earn \$4 for each dollar increase in stock.}
+\item{From $100 \leq S \leq 110.$, the slope starts to flatten, which implies that we are shorting some call options. Since the slope decreases from 4 to 1, we are shorting 3 call options at the strike price \$100.}
+\item{The slope returns to zero, so we are shorting a call option at strike price \$110. Notice again how the slopes cancel out. This concludes the portfolio.}
+\end{enumerate}
+To describe this using notation, one would write
+$$\text{Portfolio Value} = -6C_{50} + 6C_{60} + 4C_{80} - 3C_{100} - C_{110}.$$
+Similarly, we can describe the same portfolio using only puts. However, we work right to left as puts derive value when stock prices go down. After going through each step, we actually find that the two portfolios look very similar. We describe the portfolio with only puts as
+$$\text{Portfolio Value} = -P_{110} - 3P_{100} + 4P_{80} + 6P_{60} - 6P_{50}.$$
+\end{flushleft}
+\end{example}
+\begin{flushleft}
+The similarity is heavily tied to a principle called \textit{Put-Call Parity}, which we will define later.\\
+\vspace{2mm}
+While we can describe portfolios with only calls and only puts, using a combination of calls and puts will \textit{optimize} the portfolio, or be the cheapest. First, we look at the following definition:\\
+\vspace{2mm}
+\begin{defn}{}{intrinsicval}
+The intrinsic value of an option is measured relative to underlying stock price $S$ at any time. We say an option is 
+\begin{itemize}
+\item{\textit{Out of the money} if the option is worth something. This is the case if $S > E$ for calls and $S < E$ for puts.}
+\item{\textit{At the money} $S = E$ for both calls and puts.}
+\item{\textit{In the money} if it is rendered worthless. This is the case if $S < E$ for calls and $S > E$ for puts.}
+\end{itemize}
+\end{defn}
+\vspace{2mm}
+\begin{example}{}{intrinsicex}
+When optimizing our portfolio, we obviously want only out of the money options. For example, if today's stock is \$70, we only use puts for options with strike prices less than \$70 and only calls for options with strike prices greater than \$70. Using the portfolio from the previous example, we have the optimized portfolio
+$$\text{Portfolio Value} = -6P_{50} + 6P_{60} + 4C_{80} - 3C_{100} - C_{110}.$$
+\end{example}
+\textbf{A word of caution:} The portfolio we analyzed is by no means a representation of those that we observe in the real world. In fact, they are far more complicated and composed of many more options and stocks are always changing; they hardly ever remain flat.\\
+\vspace{2mm}
+Before relating calls and puts, we must introduce how money devalues over time.\\
+\vspace{1mm}
+\begin{thm}{}{presval}
+The \textit{discounted present value} of money at time $t$ is given by
+$$M(t) = Ee^{-r(T - t)}.$$
+\end{thm}
+\begin{proof}
+Let the change in money $dM$ be modeled by the differential equation.
+$$dM = rMdt$$
+Recall how this differential equation models exponential growth. Then,
+$$\frac{dM}{M} = rdt \hspace{5mm} \Longleftrightarrow \hspace{5mm} \int \frac{dM}{M} = r \int dt$$
+Let $E = M(T)$. Then,
+$$\int_{M(t)}^E \frac{dM}{M} = r \int_t^T dt \hspace{5mm} \ln(M)|_{M(t)}^E = \ln \left(\frac{E}{M(t)}\right) = r(T - t)$$
+Rearranging and exponentiating gives
+$$M(t) = Ee^{-r(T - t)}.$$
+\end{proof}
+\begin{example}{}{presval2}
+A person has money withdrawn from his savings account to be placed in his checking account at a continuous fixed basis at a rate of \$1,000 a year. This person started with \$20,000 placed in the savings account that has a 5\% interest. How much will be in the savings account in one year?\\
+
+The differential equation that satisfies this scenario is
+$$dM = \left(M - \frac{1000}{r} \right) rdt$$
+Continue with the derivation as we did for the proof in the Theorem
+$$\int \frac{dM}{M - \frac{1000}{r}} = rdt \hspace{5mm} \Longleftrightarrow \hspace{5mm} \int_{M(0)}^{M(1)} \frac{dM}{M - \frac{1000}{r}} = r\int_0^1 dt$$
+Let $u = M - \frac{1000}{r}$. Then, $du = dM$ and
+$$\int_{M(0) - \frac{1000}{r}}^{M(1) - \frac{1000}{r}} \frac{du}{u} = r\int_0^1 t dt$$
+$$\ln \left(M(1) - \frac{1000}{r} \right) - \ln \left(M(0) - \frac{1000}{r} \right) = r$$
+Use properties of logarithms:
+$$\ln \left(\frac{M(1) - \frac{1000}{r}}{M(0) - \frac{1000}{r}} \right) = r \Longleftrightarrow \frac{M(1) - \frac{1000}{r}}{M(0) - \frac{1000}{r}} = e^r$$
+Rearrange to solve for $M(1)$:
+$$M(1) = \left(M(0) - \frac{1000}{r} \right)e^r + \frac{1000}{r} = \$20,000.$$
+The differential equation is derived by taking your current amount of money $M$ minus the withdrawal rate per year $\frac{1000}{r}$, compounded by the current interest rate $r$.
+\end{example}
+\vspace{2mm}
+\begin{thm}{}{Put-call parity}
+Let $S$ be the current stock price, $C_E (S , t)$ and $P_E (S, t)$ be call and put options for a strike price $E$, and $Ee^{-r(T - t)}$ be the discounted present value of the strike price. For two portfolios (identical payoff at expiration) without arbitrage,
+$$S + P_E (S, t) = C_E (S, t) + Ee^{-r(T - t)}.$$
+This is Put-Call Parity
+\end{thm}
+\vspace{1mm}
+What happens if Put-Call Parity is violated? Then arbitrage exists! \\
+\vspace{1mm}
+\begin{itemize}
+\item{If $S + P_E (S, t) > C_E (S, t) + Ee^{-r(T - t)}$, sell $(S + P_E)$, buy $C_E$ and deposit $Ee^{-r(T - t)}$ in the bank, and immediately pocket the remaining sum as an arbitrage profit.\\
+\vspace{1mm}}
+\item{If $C_E (S, t) + Ee^{-r(T -t)} > S + P_E (S, t)$, buy $(S + P_E)$, sell $C_E$ and borrow $Ee^{-r(T - t)}$ from the bank, and immediately pocket the remaining sum as an arbitrage profit.\\
+\vspace{1mm}}
+\end{itemize}
+
+\begin{example}{}{pcp1}
+Suppose that, for an expiration date of a year from now (with 5\% interest) that $C_{60}(70, t) = \$9$ and $P_60 (70, t) = 4$. How can you use this information to make some money?\\
+
+Apply the Put-Call Parity equation and determine if it is violated:
+$$S + P_E(S, t) = 70 + P_{60}(70, t) = 74, \hspace{5mm} C_E(S, t) + Ee^{-r(T - t)} = C_{60}(70, t) + 60e^{-0.05} = 9 + 57.07 \approx 66.07.$$
+Here the left side is larger and so there exists an arbitrage opportunity. Here, we want to (1) sell at the current stock price plus the put option for \$74, (2) buy the call option at \$9 and deposit \$57.07 into the bank, (3) pocket the remaining sum, and (4) wait until expiration.
+\end{example}
+\begin{example}{}{pcp2}
+Suppose a particular stock is trading at \$180. Consider a portfolio of the following stock options that consists of the following components, all with one year until expiration:
+\begin{itemize}
+\item{Long 1 call option with a strike price of \$80.}
+\item{Short 1 put option with a strike price of \$80.}
+\item{Short 1 call option with a strike price of \$200.}
+\item{Long 1 put option with a strike price of \$200.}
+\end{itemize}
+Assuming no arbitrage in the market exists and the risk-free annual interest rate is 2\%, what must be the value of this options portfolio today?\\
+
+For the $E = \$80$ options, we are longing one call and shorting one put. Manipulating the Put-Call Parity equation, the profit is modeled by
+$$C_{80} - P_{80} = S - Ee^{-r(T - t)} = 180 - 80e^{-0.02} = \$101.58.$$
+For the $E = \$200$ options, we are longing one put and shorting one call. Manipulating the Put-Call Parity equation, the profit is modeled by
+$$P_{200} - C_{200} = Ee^{-r(T - t)} - S = 200e^{-0.02} - 180 = \$16.04.$$
+Sum these two to obtain a net present value of $\$117.62.$
+\end{example}
+\pagebreak
+\section{Probability and Calculus Review}
+We review two ideas that will help us derive a mathematical model for option pricing.\\
+
+\subsection{Probability Review Part II: Cumulative Distribution Function}
+Recall from earlier that the a probability distribution function (PDF) is a function $f(x)$ that satisfies
+$$\int_{-\infty}^{\infty} f(x)dx = 1.$$
+A \textit{cumulative distribution function} $F(t)$ is the \textit{anti-derivative} of the PDF.
+$$F(t) = P(X \leq t) = \int_{-\infty}^t f(x) dx$$
+We can derive a PDF by differentiating the CDF using the Fundamental Theorem of Calculus (FTC) and the Chain Rule.
+$$\frac{d}{dt} \int_{g(t)}^{h(t)} f(x)dx = F(h(t)) - F(g(t)) \Longrightarrow \frac{d}{dt} \left[F(h(t)) - F(g(t))\right] = F'(h(t))h'(t) - F'(g(t))g'(t)$$ 
+By the FTC, $F'(t) = f(t)$ and so
+$$\frac{d}{dt} \int_{g(t)}^{h(t)} f(x)dx = f(h(t))h'(t) - f(g(t)) g'(t)$$
+Additionally, from Definition 1.10, we defined an integral representation for standard normal distribution for $z$, letting $z = \frac{X - \mu}{\sigma}$. We can rewrite any normal distribution as
+$$\frac{1}{\sqrt{2\pi}} \int_{-\infty}^{\infty} e^{-\frac{1}{2}\left(\frac{x - \mu}{\sigma} \right)}.$$
+Now suppose we have a standard normal random variable $X \sim \mathcal{N}(\mu, \sigma^2)$ and a random variable $Y = f(X)$. Can we derive a PDF for $Y$?\\
+\vspace{1mm}
+\begin{itemize}
+\item{Write out the PDF for $X$.\\
+\vspace{1mm}}
+\item{Define $g(X) \leq Y \leq h(X)$ as the bounds for your new integral.\\
+\vspace{1mm}}
+\item{Find an integral representation for the CDF for $Y$ from the known PDF for $X$.\\
+\vspace{1mm}}
+\item{Differentiate the CDF for $Y$ to find the PDF for $Y$.}
+\end{itemize}
+
+\begin{example}{}{cdf}
+Let $Y = X^4$ where $X \sim \mathcal{N}(0, 4)$. Find the PDF for $Y$.\\
+
+We have that $\mu = 0, \sigma_Y = 2$. The PDF for $X$ is given by
+$$f(X) = \frac{1}{2\sqrt{2\pi}}e^{-\frac{X^2}{8}} \Longrightarrow F(x) = P(x \leq X) = \frac{1}{2\sqrt{2\pi}} \int_{-\infty}^{x} e^{-\frac{t^2}{8}}dt.$$
+The CDF for $Y$ is $F(Y) = P(y \leq Y) = P(X^4 \leq Y) = P(-\sqrt[4]{Y} \leq x \leq \sqrt[4]{Y})$. As such,
+$$F(Y) = \frac{1}{2\sqrt{2\pi}} \int_{-\sqrt[4]{Y}}^{\sqrt[4]{Y}} e^{-\frac{x^2}{8}} dx \Longrightarrow \frac{d}{dY} F(Y) = f(Y) = \left(\frac{1}{2\sqrt{2\pi}} e^{-\frac{\sqrt{Y}}{8}} \right) \cdot \frac{1}{4} Y^{-\frac{3}{4}} + \left(\frac{1}{2\sqrt{2\pi}} e^{-\frac{\sqrt{Y}}{8}} \right) \cdot \frac{1}{4} Y^{-\frac{3}{4}}.$$
+Hence the PDF for $Y$ is given by
+$$f(Y) = \frac{1}{4\sqrt{2\pi}}Y^{-\frac{3}{4}} e^{-\frac{\sqrt{Y}}{8}}.$$
+\end{example}
+
+\subsection{Taylor Series}
+We can use a Taylor Series to construct a polynomial approximation/representation for any function. Replace an actual function $f(x)$ with an approximating polynomial centered at $x = a$. Then, the Taylor Series representation for $f(x)$ is
+
+$$f(x) \approx f(a) + \sum_{j = 1}^n \frac{f^{(j)}(a)}{j!} (x - a)^j $$
+The approximation for $f(x)$ is valid when $|x - a|$ is small. That is to say, the Taylor Series will \textit{converge} only if the distance between $x$ and $a$ is under a certain threshold, which will vary depending on the function you want to approximate.
+
+\begin{example}{}{tseries1}
+Construct a fifth order Taylor Series for $f(x) = \sin (x)$ centered about $x = \pi$. Use this to approximate $\sin (3)$.\\
+
+The derivatives of $\sin(x)$ alternate between $\pm \sin (x)$ and $\pm \cos (x)$. Since $\sin \pi = 0$, we only care about when the derivative is $\cos x$. Since we only care about up to the fifth derivative,
+$$\frac{d}{dx^n} \sin (\pi) = \begin{cases}
+0 & \text{ if } n = 0, 2, 4\\
+1 & \text{ if } n = 1, 5\\
+-1 & \text{ if } n = 3\\
+\end{cases}
+$$
+Therefore, the fifth order Taylor Series of $\sin (x)$ is
+$$f(x) \approx (x - \pi) - \frac{1}{6}(x - \pi)^3 + \frac{1}{120} (x - \pi)^5 \hspace{5mm} \sin (3) \approx -\left((3 - \pi) - \frac{1}{6}(3 - \pi)^3 + \frac{1}{120} (3 - \pi)^5 \right) \approx 0.1411$$
+Here we use the fact that $\sin(-x) = -\sin (x)$. The graphs of both are shown on the next page:
+\begin{center}
+\includegraphics[width = 0.6\textwidth]{tayseries}
+\end{center}
+The approximating polynomial converges on $(\pi, 2\pi)$.
+\end{example}
+
+We can extend a Taylor Series to multiple dimensions. We will look at a Taylor Series in two dimensions. Recall that a function of two variables $f(x, y)$ has \textit{partial derivatives}. $\frac{\partial f}{\partial x}$ is the derivative of $f$ with respect to $x$, treating $y$ as a constant. Likewise, $\frac{\partial f}{\partial y}$ is the derivative of $f$ with respect to $y$, treating $x$ as a constant. The coefficients of a Taylor Series for a function $f(x, y)$ centered about $x = k, y = h$ are
+$$\left. b_{n, m} = \frac{\partial f}{\partial x^n} \frac{\partial f}{\partial y^m} \right \rvert_{(x, y) = (k, h)}.$$
+For a second-order Taylor Series representation $f(x, y)$ centered around $(k, h)$, the approximating polynomial is written as
+$$f(x, y) \approx b_{0, 0} + b_{1, 0}(x - h) + b_{0, 1}(y - k)  + b_{1, 1}(x - h)(y - k)  + \frac{1}{2} b_{2, 0} (x - k)^2 + \frac{1}{2}b_{0, 2} (y - h)^2$$
+More generally, any 2D Taylor Series can be described as
+$$\sum_{n = 1}^{\infty} \sum_{m = 1}^{\infty} \frac{b_{n, m} (x - k)^n (y - h)^m}{n! m!}.$$
+
+\begin{example}{}{ts2}
+Find the second-order Taylor-Series approximation for $f(x, y) = x^2 \cos (y)$ about $(1, 0)$.\\
+
+We have that $\frac{\partial f (1, 0)}{\partial y} = 0$, so $b_{0, 1} = b_{1, 1} = 0.$ We compute the remaining partial derivatives
+$$b_{0, 0} = f(1, 0) = 1, \hspace{3mm} b_{1, 0} = 2x \cos (y)|_{(1, 0)} = 2, \hspace{3mm} b_{2, 0} = 2\cos (y)|_{(1, 0)} = 2, \hspace{3mm} b_{(0, 2)} = -x^2 \cos (y)|_{(1, 0)} = -1$$
+Therefore, the second-order Taylor Series centered for $f(x, y)$ around (1, 0) is
+$$f(x, y) \approx 1 + 2(x - 1) + (x - 1)^2 - \frac{1}{2}y^2$$
+\begin{center}
+\includegraphics[width = 0.6\textwidth]{2dtay}
+\end{center}
+Suppose we wanted to approximate $f(1.1, 0.1)$, then
+$$f(1.1, 0.1) \approx 1 + 2(0.1) + (0.1)^2 - \frac{1}{2}(0.1)^2 \approx 1.205.$$
+The actual value is roughly 1.21.
+\end{example}
+\pagebreak
+
+\section{Geometric Brownian Motion and Modeling Stock Prices}
+\subsection{Motivation}
+Now, we consider a more realistic scenario: what if we make a stronger assumption that stock prices do not follow a deterministic model, but rather a random one? Suppose that, at any point in time, the stock price is equally likely to increase as it is to decrease. Or, more precisely,
+
+$$P \left( \frac{\partial S}{\partial t} \right) = P \left( \frac{\partial S}{\partial t} \right) = \frac{1}{2}.$$
+
+Mathematically, we are saying that the probability for the stock price to increase to equal to the probability of it decreasing. For more intuition, let us use a fair coin. If the coin lands on heads, the stock price increases by a dollar. For tails, it decreases. If we flip it once, there are 2 outcomes$-S$ increases or decreases by a dollar, each with equal probability. What if we flipped it 100 times? There would now be $2^{100}$ different outcomes, or \textit{paths} that the stock price could follow. A model that measures paths \textit{stochastically}, or by probability, is known as a \textit{random walk}.
+
+\subsection{Random Walks}
+The idea introduced earlier is the foundation of modeling stock prices.\\
+\begin{example}{}{randwalk}
+Below is an example of a simulation using the same example, instead letting the stock price increase/decrease by 10 cents. 
+\begin{center}
+\includegraphics[width = 0.6\textwidth]{randwalk1}
+\end{center}
+Here we have 100 different paths. Each one represents one of the $1.268 \times 10^{30}$ different outcomes for the stock to possibly follow. Because each iteration, or time step, has one of two outcomes, the Central Limit Theorem tells that a random walk roughly follows a normal distribution!
+\begin{center}
+\includegraphics[width = 0.6\textwidth]{randwalk2}
+\end{center}
+As we expect, roughly 65\% of the models keep the stock price 1 dollar above or below from where it started and 94\% keep the stock 2 dollars above or below from where it started. We can think of the outliers (the green lines in the random walk iterations) as the maximum spread of the distribution. Therefore, this model can be described as a normal distribution with mean 0 and variance $\sigma_S^2$.
+\end{example}
+
+\subsection{Geometric Brownian Motion}
+Let us take one step further. While we showed that random walks undoubtedly follow a normal distribution, how can we mathematically model them? This will take some time, but first we introduce a common stochastic model:
+
+\begin{defn}{}{gbm}
+Let $S$ be the stock price, $\mu$ be the average annual growth of the stock price (drift), and $\sigma$ as the standard deviation of annual returns (volatility). Then, the stock price follows a closed-form model given by:
+$$\frac{dS}{S} = \mu dt + \sigma dw \Longleftrightarrow dS = \mu S dt + \sigma S dw.$$
+The defined model is called a \textit{stochastic differential equation} (SDE).
+\end{defn}
+
+We decompose each component of the model:
+\vspace{1mm}
+\begin{itemize}
+\item{$\mu dt$ is a deterministic component, or one without randomness.}
+\item{$\sigma dw$ is a random component, where $dw$ is a random number drawn from a normal distribution using the deterministic components; it has mean $\mu$ and variance $dt$.}
+\item{After a small increase in time $dt$, the stock price increases to $S + dS.$}
+\end{itemize}
+\vspace{2mm}
+To prepare ourselves for future derivations, let us consider $(dS)^2$. 
+$$(dS)^2 = (\mu S dt + \sigma S dw)^2 = \mu^2 S^2 (dt)^2 + 2\mu \sigma S^2 dt dw + \sigma^2 S^2 (dw)^2.$$
+with $dw \sim \mathcal{N}(0, dt)$. This implies that $E[dw] = 0$. As for $\text{Var}(dw)$:
+$$\text{Var}(w_{t + dt} - w_t) = \text{Var}(w_{t + dt}) - 2\text{Cov}(w_{t + dt}, w_t ) + \text{Var}(w_t).$$
+Since $dw$ follows a normal distribution with variance $dt$, we can integrate to obtain
+$$w_t = \int_0^t ds \Longrightarrow \sigma_{w_t} = t.$$
+Likewise, $\text{Var}(w_{t + dt} ) = t + dt$. The covariance
+$$\text{Cov}(w_{t + dt}, w_t) = E[w_s w_t] - E[w_s] E[w_t] = E[w_s w_t].$$
+Here $s, s < t$ and is another random variable such that $w_t = w_s + (w_t - w_s)$. Then,
+$$E[w_s w_t] = E[w_s (w_s + (w_t - w_s))] = E[w_s^2] + E[w_s (w_t - w_s)] = E[w_s^2] + E[w_s] E[w_t - w_s].$$
+Since $E[w_s] = 0$, $E[w_s w_t] = E[w_s^2] = s$. Therefore, $\text{Cov}(w_{t + dt}, w_t) = t$ and
+$$\text{Var}(dw) = (t + dt) - 2t + t = dt.$$
+In the process, we also proved that $\text{Var}(dw) = E[(dw)^2] = dt.$ So, provoking the limit $dt \to 0$ gives $dt dw = 0$ and $(dw)^2 \to dt.$\\
+\vspace{2mm}
+We summarize our findings by describing how the probabilities $P(dw)$, $P(dt dw)$, and $P((dw)^2)$ behave.\\
+\vspace{1mm}
+\begin{itemize}
+\item{$P(dw)$ follows a normal distribution of mean 0 and variance $dw$: $P(dw) \sim \mathcal{N}(0, dt)$.\\
+\vspace{2mm}}
+\item{$P(dw dt)$ follows a normal distribution of mean 0 and variance $dw dt$: $P(dw dt) \sim \mathcal{N} (0, dwdt)$.\\
+\vspace{2mm}}
+\item{$P((dw)^2)$ follows a normal distribution of mean $dt$ and variance $2(dt)^2$: P$((dw)^2) \sim \mathcal{N} (0, 2(dt)^2)$.\\
+\vspace{2mm}}
+\end{itemize}
+The derivation for $\text{Var}((dw)^2)$ uses the fact that $E[X^4] = 3\sigma^4$ for a normal distribution. So, $E[(dw)^4] = 3(dt)^2$ and $\text{Var}(dw)^2 = E[(dw)^4] - (E[(dw)^2])^2 = 2(dt)^2.$
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.32\textwidth]{pdw}
+\hspace{1mm}
+\includegraphics[width=0.32\textwidth]{pdwdt}
+\hspace{1mm}
+\includegraphics[width=0.32\textwidth]{pdwsq}
+\end{figure}
+Here is a side-by-side comparison of the three probabilities, following the distributions mentioned earlier. Note that $(dw)^2$ will generally be skewed to the left because $dt$ is almost always very small. The variance $2(dt)^2$ is consequently also really small. Improving the spread often involves a transformation, with a logarithmic transformation as the most common.\\
+\vspace{2mm}
+Relating back to the model, we have that $dS = \sigma^2 S^2 dt$.
+
+\subsection{Ito's Lemma}
+\begin{thm}{}{itolemma}
+Let $V$ govern the price of a stock $S$ at a given time $t$. Then, the form of Ito's Lemma for $dV(S, t)$ is
+$$dV = \sigma S \frac{\partial V}{\partial S}dw + \left(\mu S \frac{\partial V}{\partial S} + \frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} \right)dt.$$
+\end{thm}
+\vspace{2mm}
+\begin{proof}
+Consider a 2D-Taylor Series of order 2 for $V$ centered around $(S_0, t_0)$. Then
+$$
+V(S, t) \approx V(S_0, t_0) + \frac{\partial V(S_0, t_0)}{\partial S}(S - S_0) + \frac{\partial V(S_0, t_0)}{\partial t}(t - t_0) + \left(\frac{1}{2} \right) \frac{\partial^2 V(S_0, t_0)}{\partial S^2} (S - S_0)^2$$
+$$
++ \frac{\partial^2 V (S_0, t_0)}{\partial S \partial t} (S - S_0)(t - t_0) + \left(\frac{1}{2} \right) \frac{\partial^2 V (S_0, t_0) }{\partial t^2} (t - t_0)^2 + \cdot \cdot \cdot$$
+Let $dV = V(S, t) - V(S_0, t_0)$ where $dS = S - S_0$ and $dt = t - t_0$. Then,
+$$dV = \frac{\partial V}{\partial S} dS + \frac{\partial V}{\partial t}dt + \left(\frac{1}{2} \right)\frac{\partial^2 V}{\partial S^2} (dS)^2 + \frac{\partial^2 V}{\partial S \partial t} dS dt + \left(\frac{1}{2}\right) \frac{\partial^2 V}{\partial t^2} (dt)^2.$$
+If we take the limit $dt \to 0$, then $(dt)^2$ becomes negligible and
+$$dV = \frac{\partial V}{\partial S} dS + \frac{\partial V}{\partial t}dt + \left(\frac{1}{2} \right)\frac{\partial^2 V}{\partial S^2} (dS)^2 + \frac{\partial^2 V}{\partial S \partial t} dS dt.$$
+
+Substituting $dS = \mu S dt + \sigma S dw$ and $(dS)^2 = \sigma^2 S^2 dt$ yields
+$$dV = \frac{\partial V}{\partial S}(\mu S dt + \sigma S dw) + \frac{\partial V}{\partial t}dt + \left(\frac{1}{2} \right) \frac{\partial^2 V}{\partial S^2} (\sigma^2 S^2 dt) + \frac{\partial^2 V}{\partial S \partial t} (\mu S dt + \sigma S dw)dt.$$
+$$\Longrightarrow dV = \sigma S \frac{\partial V}{\partial S}dw + \left(\mu S \frac{\partial V}{\partial S} + \frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} \right)dt.$$
+\end{proof}
+
+\subsection{The Stochastic Process for S(t)}
+Continuing from Ito's Lemma, the trick is to let $V = \ln S$. Then we have the $\frac{\partial V}{\partial S} = \frac{1}{S}$, $\frac{\partial^2 V}{\partial S^2} = -\frac{1}{S^2}$, and $\frac{\partial V}{\partial t} = 0$. Rearranging and collecting terms gives:
+$$dV = \left(\mu - \frac{1}{2}\sigma^2 \right)dt + \sigma dw.$$
+We begin to solve by integrating
+$$\int_0^t dV = \int_0^t \left(\mu - \frac{1}{2} \sigma^2 \right)dt + \int_0^t \sigma dw \Longrightarrow \int_0^t d(\ln S(T)) = \int_0^t \left(\mu - \frac{1}{2} \sigma^2 \right)dt + \int_0^t \sigma dw$$
+$$\Longrightarrow \ln S(t) - \ln S(0) = \left(\mu - \frac{1}{2} \sigma^2 \right)t + \sigma(w(t) - w(0)).$$
+We have that $w(0) = 0$, with probability one, almost everywhere. Moving $\ln S(0)$ and exponentiating:
+$$S(t) = S(0) e^{\left(\mu - \frac{1}{2}\sigma^2 \right)t + \sigma w(t)}.$$
+If $T$ is the expiration date of an option, then
+$$\frac{S(T)}{S(t)} = e^{\left(\mu - \frac{1}{2}\sigma^2 \right)(T - t) + \sigma (w(T) - w(t))}.$$
+Then, $\frac{S(T)}{S(t)}$ follows a \textbf{lognormal} distribution with mean $\left(\mu - \frac{1}{2} \sigma^2 \right)(T - t)$ and variance $\sigma^2 (T - t)$. If we move $S(t)$ to the right, then
+$$\ln (S(T)) \sim \mathcal{N} \left(\ln S(t) + \left(\mu - \frac{1}{2} \sigma^2 \right)(T - t), \sigma^2 (T - t) \right).$$
+We write the log-normal probability distribution, $f(S(T))$, as
+$$f(S(T)) = \frac{1}{S(t) \sigma_1 \sqrt{2\pi}} e^{-\frac{1}{2} \left(\frac{\ln [S(T)] - \mu_1}{\sigma_1} \right)^2}.$$
+where $\mu_1 = \ln [S(t)] + \left(\mu - \frac{1}{2} \sigma^2 \right)(T - t)$ and $\sigma_1^2 = \sigma^2 (T - t).$\\
+\vspace{2mm}
+The \textbf{mode} is the value for $S(T)$ that produces the maximum value for $f(S(T))$.
+$$S(T) = S(t)e^{\left(\mu - \frac{3}{2}\sigma^2\right)(T - t)}.$$
+An expression for the \text{maximum value} of $f(S(T))$ as a function of $\mu, \sigma, (T - t)$ and $S(t)$ is obtained by plugging in the mode:
+$$\text{max} (f(S(T))) = \frac{1}{\sigma S(t)\sqrt{2\pi (T - t)}} e^{(\sigma^2 - \mu)(T - t)}.$$
+Recall from earlier that the \textbf{mean} of a distribution is the average of all values, or $E[X]$. We define the \textbf{median} $M$ as the $X$ satisfying $P(X \leq M) = P(X \geq M) = \frac{1}{2}$. The \textbf{mode} is given by the value corresponding to the peak, or maximum, of the distribution. For a normal distribution, these three values are equivalent due to its symmetry. However, for a lognormal distribution, these measures of central tendency often differ from each other. More precisely,
+$$\text{Mean } = S(0)e^{\mu T}, \hspace{5mm} \text{Median } = e^{\left(\mu - \frac{1}{2}\sigma^2\right)T}, \hspace{5mm} \text{Mode } = S(0)e^{\mu T}.$$
+We can also rank each value through inequalities:
+$$\text{Mode } < \text{Median } < \text{Mean}$$
+This holds for any lognormal distribution.
+\pagebreak
+\begin{example}{}{lognormdist}
+\raggedright
+Let $S(t) = \$40$, $\sigma = 0.2, T = 1$ year, $t = 0.5$, and $\mu = 0.16$. Find the most likely value for $f(S(T))$.\\
+\begin{minipage}[t]{0.45\linewidth}\vspace{-4pt}
+Plug the known values into the expression for $\text{max}(f(S(T))).$
+$$\max(f(S(T))) =
+\frac{1}{40(0.16)\sqrt{2\pi}} e^{((0.2)^2 - 0.16)(0.5)}\\$$
+$$\approx 0.066.$$
+We can also find the \textbf{mode} corresponding to the maximum value:
+$$\text{Mode } = 40e^{\left(0.16 - \frac{3}{2}(0.2)^2\right)(0.5)} \approx 42.05.$$
+This really says that the most likely stock price is $S(T) = \$42.05$ with probability 6.6\%.
+\end{minipage}
+\begin{minipage}[t]{0.54\linewidth}\vspace{-4pt}
+\includegraphics[width = 0.95\textwidth]{lognormdist}
+\end{minipage}
+This is also easily verified through the graph. The mode, or the pink line, gives us the maximum probability for $f(S(T))$. As we observe, the mean/median/mode all differ due to the skewed nature of a lognormal distribution. 
+\end{example}
+It is common to get the distributions confused, especially when modeling stocks follow two different types of distributions. Generally, when the \textit{returns} on a stock $\ln (S(T))$ follow a \textit{normal distribution}, the stock prices $S(T)$ follow a \textit{lognormal distribution}. This is valid under a Geometric Brownian Motion model.
+\pagebreak
+
+\section{The Black-Scholes Equation}
+We now have the knowledge of basic options and Geometric Brownian Motion in our toolkit. How can we extend this idea to develop a dynamic model for modeling option prices? It wasn't until 1973 that a mathematical model was published and widely accepted in the financial field. Fischer Black and Myron Scholes cleverly used the idea of random walks and Brownian Motion to their advantage. Through a series of simple tricks and computations, the renowned Black-Scholes Equation came to fruition.
+
+\subsection{The Equation}
+What we will notice is that the Black-Scholes Equation closely resembles the Ito's Lemma representation of option prices with some slight modifications.
+\begin{thm}{}{bseq}
+The option price $S$ at a specified time $t$, given by $V(S, t)$, satisfies the second-order partial differential equation
+$$\frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} + rS \frac{\partial V}{\partial S} - rV = 0.$$
+\end{thm}
+\begin{proof}
+To derive the equation, we first recall the result of Ito's Lemma as stated in Theorem 4.3.
+$$dV = \sigma S \frac{\partial V}{\partial S}dw + \left(\mu S \frac{\partial V}{\partial S} + \frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} \right)dt.$$
+Now, consider a portfolio $\Pi$ where you buy one option $V$ and sell $\Delta$ units of stock. The following relationships fall naturally:
+$$\begin{cases}
+\Pi = V - S\Delta &\\
+d\Pi = dV - (dS) \Delta &\\
+\end{cases}$$
+Using the SDEs for $dV$ (4.3) and $dS$ (4.2):
+$$d\Pi = \sigma S \left(\frac{\partial V}{\partial S} - \Delta \right)dw + \left(\mu S \frac{\partial V}{\partial S} - \mu S \Delta + \frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial ^2 V}{\partial S^2} \right)dt$$
+We can choose $\Delta = \frac{\partial V}{\partial S}$ to eliminate the stochastic/random, or the ``risk," component. This makes the portfolio value completely deterministic:
+$$d\Pi = \left(\frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial ^2 V}{\partial S^2} \right)dt.$$
+With the risk gone, the portfolio must offer the risk-free rate of return to ensure no arbitrage is possible. This is given by the exponential differential equation (for compounding of money)
+$$\frac{d\Pi}{\Pi} = r dt \Longrightarrow d\Pi = r\Pi dt.$$
+Plug in what we defined for $\Pi$ and $d\Pi$ earlier:
+$$\left(\frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial ^2 V}{\partial S^2} \right)dt = r(V - S\Delta)dt.$$
+The $dt$ terms will cancel. All we need to do is move each term to one side to arrive at the Black-Scholes equation:
+$$\frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} + rS \frac{\partial V}{\partial S} - rV = 0.$$
+\end{proof}
+The Black-Scholes equation introduces an approach called \textit{delta hedging}. As the name suggests, it chooses a $\Delta$ that minimizes or completely eradicates risk. In the case of the Black-Scholes Equation, we were able to find a $\Delta$ that achieves this goal.\\
+\vspace{2mm}
+Due to preliminary conditions such as delta hedging, Black-Scholes equation can be found as ``restrictive," or not always representative of real-world scenarios. The model suggests a constant rate of return and volatility, which is almost never true. Nonetheless, Black-Scholes is currently the closest thing we have to a perfect model$-$it undoubtedly works. When we define the closed-form solutions for Calls and Puts in the next section, we can plug them in and find that they, indeed, satisfy the PDE.
+
+\begin{example}{}{bscase}
+What we introduced in Theorem 5.1 is the ``general" form of the Black-Scholes Equation. However, we may choose different expressions for $\Delta$ and $dS$. Suppose that we wanted to have our portfolio satisfy the differential equation $r d\Pi dt = r(V - S \Delta)dt + d^* S\Delta dt$, where $d^*$ is a fixed constant. What is the resulting Black-Scholes equation?\\
+
+Up to choosing $\Delta$, the steps are exactly the same. All we need to do is to use the modified equation for $\Delta$:
+$$\left(\frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} \right)dt = r\left(V - S\frac{\partial V}{\partial S}\right) + d^* S \frac{\partial V}{\partial S}.$$
+Rearranging,
+$$\frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} + rS\frac{\partial V}{\partial S} - rV = d^* S \frac{\partial v}{\partial S}.$$
+The final form of the ``new" Black-Scholes equation is
+$$\frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} + (r - d^*) S \frac{\partial V}{\partial S} - rV = 0.$$
+\end{example}
+
+\begin{example}{}{bscase2}
+This time, let $dS$ be given by $dS = 5dt + 6S^2 dw$. What is the resulting Black-Scholes equation?
+
+Given that $(dS)^2 = 36S^4 dt$, we have the form of Ito's Lemma:
+$$dV = 6S^2 \frac{\partial V}{\partial S}dw + \left(5 \frac{\partial V}{\partial S} + \frac{\partial V}{\partial t} + 18S^4 \frac{\partial^2 V}{\partial S^2} \right)dt$$
+Let $\Pi = V - S\Delta$, then $d\Pi = dV - \Delta dS$ and
+$$d\Pi = 6S^2 \frac{\partial V}{\partial S} dw + \left(5 \frac{\partial V}{\partial S} + \frac{\partial V}{\partial t} + 18S^4 \frac{\partial^2 V}{\partial S^2} \right)dt - (5dt + 6S^2 dw)\Delta$$
+Setting $\Delta = \frac{\partial V}{\partial S}$, we eliminate the random component and obtain
+$$d\Pi = \left(\frac{\partial V}{\partial t} + 18S^4 \frac{\partial^2 V}{\partial S^2} \right)dt = r\Pi dt = r\left(V - S\frac{\partial V}{\partial S}\right)dt.$$
+The corresponding Black-Scholes equation is therefore
+$$\frac{\partial V}{\partial t} + 18S^4 \frac{\partial^2 V}{\partial S^2} + rS \frac{\partial V}{\partial S} - rV = 0.$$
+\end{example}
+\subsection{Solutions to the Black-Scholes Equation}
+While we will not explicitly derive the solution, the idea is to transform the equation into a familiar PDE that has a closed-form solution, namely the heat equation, which has the standard form
+$$u_t = ku_{xx}.$$
+The solution to the heat equation requires finding a \textit{Fourier Series} representation of the form
+$$u(x, t) = \sum_{n = 1}^{\infty} b_n e^{-kn^2 t} \sin (nt).$$
+$b_n$ is a coefficient obtained through what is called a \textit{Sine Transform}, which decomposes functions as a series of sine waves.\\
+\vspace{1mm}
+The solution to the Black-Scholes Equation doesn't quite have this form, but hopefully this serves as a general intuition on how we connect Black-Scholes to more commonly used techniques in PDE theory. What we will actually discover is that the solution to the Black-Scholes equation incorporates a lot of working components.
+
+\begin{thm}{}{bssol}
+European Call and Put options, in the following form, satisfy the Black-Scholes equation.
+$$C_E (S, t) = S \mathcal{N}(d_1) - Ee^{-r(T - t)} \mathcal{N}(d_2), \hspace{5mm} P_E (S, t) = Ee^{-r(T - t)} \mathcal{N}(-d_2) - S\mathcal{N}(-d_1)$$
+where $$d_1 = \frac{\ln \left(\frac{S}{E} \right) + \left(r + \frac{1}{2}\sigma^2\right)(T - t)}{\sigma \sqrt{T - t}}, \hspace{5mm} d_2 = \frac{\ln \left(\frac{S}{E} \right) + \left(r - \frac{1}{2}\sigma^2\right)(T - t)}{\sigma \sqrt{T - t}}$$
+and $\mathcal{N}$ is the Gaussian normal distribution.
+\end{thm}
+\vspace{1mm}
+Before proceeding any further, we clean up with some notation:\\
+\vspace{1mm}
+\begin{itemize}
+\item{$S$ and $E$ are the stock and strike prices.}
+\item{$r$ is the prevailing risk-free rate.}
+\item{$\sigma$ is the volatility, or the magnitude of stock fluctuations over time. It measures the degree of uncertainty, or risk, in movements of the stock price.}
+\item{$T - t$ is the time to expiration.\\} 
+\end{itemize}
+\vspace{1mm}
+If we want to price a European call and put option using the Black-Scholes model, we need to know the exact value of the above items.\\
+\pagebreak
+\begin{example}{}{bsprob1}
+Apple's Stock Price on February 26, 2025 (Ticker: APPL) was \$240. According to the Black-Scholes Model, determine how one should price a call option if the strike price is \$240, risk-free rate is 5\%, volatility is 20\%, and time to expiration is 1 year.\\
+
+First, compute the values for $d_1$ and $d_2$ using the given information.\\
+$$d_1 = \frac{\ln \left(\frac{240}{240} \right) + \left(0.05 + \frac{1}{2}(0.2)^2\right)}{0.2} = 0.35, \hspace{5mm} d_2 = \frac{\ln \left(\frac{240}{240} \right) + \left(0.05 - \frac{1}{2}(0.2)^2\right)}{0.2} = 0.15$$
+Next, compute $\mathcal{N}(d_1), \mathcal{N}(d_2)$.
+$$\mathcal{N}(d_1) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{d_1} e^{-0.5x^2}dx = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^{0.35} e^{-0.5x^2}dx \approx 0.6368$$
+$$\mathcal{N}(d_2) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{d_2} e^{-0.5x^2}dx = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^{0.15} e^{-0.5x^2}dx \approx 0.5596$$
+We can now price our Call option!
+$$C_{240}(240, t) = 240(0.6368) - 240e^{-0.05}(.5596) \approx \$25.08.$$
+\end{example}
+\vspace{1mm}
+Going through each computation is tiresome and unnecessary; there are packages in programming software that will output the prices, provided you have the relevant information.\\
+\vspace{1mm}
+\begin{example}{}{bsprob2}
+Suppose a European Call option is priced at \$30 with a strike price of \$100.27 using the Black-Scholes model. If the stock price is \$125.33, volatility = $20\%$, and time to expiration is one year, find the prevailing risk-free rate.\\
+
+The idea is to write $d_1$, $d_2$ as a function of $r$. After plugging in values,
+$$d_1 = 5(\ln(1.25) + r + 0.02), \hspace{5mm} d_2 = 5(\ln(1.25) + r - 0.02).$$
+Then, we set up an equation to solve for $r$.
+$$30 = \frac{125.33}{\sqrt{2\pi}}\int_{-\infty}^{5(\ln(1.25) + r + 0.02)} e^{-0.5x^2} dx - \frac{100.27}{\sqrt{2\pi}} e^{-r} \int_{-\infty}^{5(\ln(1.25) + r - 0.02)} e^{-0.5x^2} dx$$
+Using a graphing calculator, we find that $r \approx 4.04\%$.
+\end{example}
+\subsection{Limits of Calls and Puts}
+So far, we have used the Black-Scholes model to price Calls and Puts. While that is already an indispensable tool, we can go further. What if we took limits of each component? How does that influence the behavior of Call and Put prices? We will analyze the limits of $\sigma$ and $t$ for example.
+\begin{example}{}{limitsigma}
+Compare and contrast the behavior of a market for $\sigma \to \infty$ and $\sigma \to 0$ using Call and Put options.\\
+
+We first look at what happens to $\mathcal{N}(d_1), \mathcal{N}(d_2)$. As $\sigma \to \infty$, $d_1 \to \infty$ and $d_2 \to -\infty$, making, $\mathcal{N}(d_1) = 1$ and $\mathcal{N}(d_2) = 0$. Therefore,
+$$C_E (S, t) \to S \text{ and } P_E (S, t) \to Ee^{-r(T - t)}.$$
+\textit{Remark}: In this limit, $\mathcal{N}(-d_1) = 0$ and $\mathcal{N}(-d_2)$, which is used for the Put equation.\\
+$\sigma \to \infty$ represents an extremely volatile market (i.e. sudden market crash). Call options converge to the stock price and Put options converge to the present value of the strike price.\\
+
+Let's see what happens if we take $\sigma \to 0$.\\
+
+We must consider if $\ln \left(\frac{S}{E} \right) + \left(r + \frac{1}{2}\sigma^2\right)(T - t) > 0$, or $S > Ee^{-r(T - t)}$ when we set $\sigma$ to 0 and simplify. In this case, as $\sigma \to 0$, $d_1 \to \infty$ and $d_2 \to \infty$, making $\mathcal{N}(d_1) \to 1$ and $\mathcal{N}(d_2) \to 1$. Then, we obtain the conditional value
+$$C_E (S, t) = \begin{cases}
+S - Ee^{-r(T - t)} > 0 & \text{ if } S > Ee^{-r(T - t)} \text{(intrinsic value)}\\
+0 & \text{ otherwise}\\
+\end{cases}
+$$
+As we would expect for a put option, the conditions are flipped:
+$$P_E (S, t) = \begin{cases}
+0 & S > Ee^{-r(T - t)}\\
+Ee^{-r(T - t)} - S & \text{ otherwise}\\
+\end{cases}$$
+$\sigma \to 0$ implies not much is happening in the market and prices are stable. Without volatility, option prices converge to their value at expiration discounted to its present value.
+\end{example}
+
+\begin{example}{}{limittime}
+Compare and contrast the behavior for $t \to T$ using Call and Put options.\\
+
+We first have to consider $d_1$ and $d_2$ for when $S > E$ and $S < E$. As $t \to T$, $T - t \to 0$.
+$$\lim_{t \to T} d_1 = \lim_{t \to T} d_2 = \begin{cases}
+\infty & \text{ if } S > E\\
+-\infty & \text{ if } S < E\\
+\end{cases}
+$$
+This is derived from the fact that $\ln \left(\frac{S}{E} \right) > 0$ if $S > E$ and $\ln \left(\frac{S}{E} \right) < 0$ if $S < E$. Then, 
+$$\mathcal{N}(d_1) = \mathcal{N}(d_2) = \begin{cases}
+1 & \text{ if } S > E\\
+0 & \text{ if } S < E\\
+\end{cases}
+$$
+Additionally, $Ee^{-r(T - t)} \to E$ and so
+$$\lim_{t \to T} C_E (S, t) = \begin{cases}
+S - E & \text{ if } S > E\\
+0 & \text{ if } S < E\\
+\end{cases} = \text{max}(S - E, 0).$$
+Likewise,
+$$\lim_{t \to T} P_E (S, t) = \begin{cases}
+0 & \text{ if } S > E\\
+E - S & \text{ if } S < E\\
+\end{cases} = \text{max}(E - S, 0).$$
+Therefore, as $t \to T$, options converge to their well known values$-$those derived in Section 2. This makes sense as we constructed the portfolios at $t = T$, or at expiration.
+\end{example}
+As a sanity check, other relevant limits for puts and calls are shown below:\\
+\vspace{2mm}
+Stock price grows infinitely (i.e. $S \to \infty$).
+\begin{itemize}
+\item{$C_E (S, t) \to \infty$.}
+\item{$P_E (S, t) \to 0$.\\}
+\end{itemize}
+\vspace{2mm}
+Stock price unexpectedly plummets (i.e. $S \to 0$).
+\begin{itemize}
+\item{$C_E (S, t) \to 0$.}
+\item{$P_E (S, t) \to Ee^{-r(T - t)}.$\\}
+\end{itemize}
+\vspace{2mm}
+Interest rates are growing rapidly (i.e. $r \to \infty$).
+\begin{itemize}
+\item{$C_E (S, t) \to S$.}
+\item{$P_E (S, t) \to 0$.\\}
+\end{itemize}
+\vspace{2mm}
+A common theme that is reflected between each limit is how calls and puts always behave in opposition to each other. This is necessary for a stable market and for no arbitrage profits to exist.\\
+\pagebreak
+
+\section{The Greeks: Changes in Calls and Puts}
+\subsection{Introduction}
+In the last section, we analyzed limits of calls and puts with respect to each of the components of the Black-Scholes model. Now, as the title implies, we are going to look at the partial derivatives of options to measure how they change as one component is perturbed. Each derivative is given a special name, as we observe with the following definition.\\
+\vspace{1mm}
+\begin{defn}{}{greeks}
+Let $C_E (S, t)$, $P_E (S, t)$ be European Call and Put options following the Black-Scholes model. The \textit{Greeks} are a set of partial derivatives of $C$ and $P$ with respect to different variables in the model. More precisely,
+$$\text{Delta}: \Delta_C = \frac{\partial C}{\partial S}, \hspace{5mm} \Delta_P = \frac{\partial P}{\partial S}$$
+$$\text{Theta}:  \theta_C = \frac{\partial C}{\partial t}, \hspace{5mm} \theta_P = \frac{\partial P}{\partial t}.$$
+$$\text{Vega}: \nu_C = \frac{\partial C}{\partial \sigma}, \hspace{5mm} \nu_P = \frac{\partial P}{\partial \sigma}.$$
+$$\text{Rho}: \rho_C = \frac{\partial C}{\partial r}, \hspace{5mm} \rho_P = \frac{\partial P}{\partial r}.$$
+\end{defn}
+\vspace{1mm}
+We briefly interpret each derivative:\\
+\vspace{1mm}
+\begin{itemize}
+\item{Delta is the change of an option price with respect to a change in stock price.}
+\item{Theta is the change of an option price as it approaches expiration (time decay).}
+\item{Vega is the change of an option price as the volatility of the stock changes.}
+\item{Rho is the change of an option price with respect to a change in interest rate.\\
+\vspace{2mm}}
+\end{itemize}
+The greeks are valuable for options traders and portfolio managers who wish to understand how their portfolio responds to changes in any of these variables and to hedge their positions accordingly.\\
+\vspace{2mm}
+Note that this is not the complete list of greeks, but the ones listed above are typically the most used.
+\subsection{Derivation and Analysis of the Greeks}
+Throughout this section, we will analytically derive a closed-form expression for each of these greeks. The heavy work will come with computing the greeks for Calls; Put-Call Parity quickly gives us the partials for Puts.
+
+\begin{thm}{}{Delta}
+Options that follow the Black-Scholes pricing model find that 
+$$\frac{\partial C}{\partial S} = \Delta_C = \mathcal{N}(d_1), \hspace{5mm} \frac{\partial P}{\partial S} = \Delta_P = \mathcal{N}(d_1) - 1$$
+\end{thm}
+The proof for this Theorem will be lengthy; there are multiple items to prove. However, this will save us a lot of time when deriving the other greeks.
+
+\begin{proof}
+Before we begin, define $n(d) = \mathcal{N}'(d) = \frac{\partial \mathcal{N}(d)}{\partial d} = \frac{1}{\sqrt{2\pi}}e^{-0.5d^2}.$ Using the multivariate Chain Rule, 
+$$\frac{\partial C}{\partial S} = \mathcal{N}(d_1) + Sn(d_1) \frac{\partial d_1}{\partial S} - Ee^{-r(T - t)} n(d_2) \frac{\partial d_2}{\partial S}$$
+We can use the equation in Theorem 5.4 to compute $\frac{\partial d_1}{\partial S}$ and $\frac{\partial d_2}{\partial S}$:
+$$\frac{\partial d_1}{\partial S} = \frac{1}{E} \cdot \frac{E}{S} \cdot \frac{1}{\sigma \sqrt{T - t}} = \frac{1}{S \sigma \sqrt{T - t}} = \frac{\partial d_2}{\partial S}$$
+Substitute these values into $\frac{\partial C}{\partial S}$
+$$\frac{\partial C}{\partial S} = \mathcal{N}(d_1) + \frac{Sn(d_1)}{S\sigma \sqrt{T - t}} - \frac{E}{S} e^{-r(T - t)} \left(\frac{n(d_2)}{\sigma \sqrt{T - t}} \right)$$
+We can factor out $\frac{1}{S\sigma \sqrt{T - t}}$:
+$$\frac{\partial C}{\partial S} = \mathcal{N}(d_1) + \frac{1}{S\sigma \sqrt{T - t}} \textcolor{blue}{\left(Sn(d_1) - Ee^{-r(T - t)}n(d_2) \right)}$$
+The goal is to show that the expression in \textcolor{blue}{blue} is equal to zero. Before doing so, we need to show that $d_2 = d_1 - \sigma \sqrt{T - t}.$
+$$d_1 - \sigma \sqrt{T - t} = \frac{\ln \left(\frac{S}{E} \right) + \left(r + \frac{1}{2}\sigma^2 \right)(T - t)}{\sigma \sqrt{T}} - \sigma \sqrt{T - t}$$
+$$ = \frac{\ln \left(\frac{S}{E} \right) + \left(rT - rt + \frac{1}{2}\sigma^2 T - \frac{1}{2} \sigma^2 t \right) - \sigma^2 (T - t)}{\sigma \sqrt{T}}$$
+$$ = \frac{\ln \left(\frac{S}{E} \right) + \left(rT - rt - \frac{1}{2}\sigma^2 T + \frac{1}{2} \sigma^2 t \right)}{\sigma \sqrt{T}}$$
+$$ = \frac{\ln \left(\frac{S}{E} \right) + \left(r - \frac{1}{2}\sigma^2 \right)(T - t)}{\sigma \sqrt{T}} = d_2$$
+So, we have that
+$$Ee^{-r(T - t)}n(d_2) = Ee^{-r(T - t)}n(d_1 - \sigma \sqrt{T - t}) = Ee^{-r(T - t)} \cdot \frac{1}{\sqrt{2\pi}} e^{-\frac{1}{2}(d_1 - \sigma \sqrt{T - t})^2}$$
+$$ = Ee^{-r(T - t)} \cdot \underbrace{\frac{1}{\sqrt{2\pi}} e^{-0.5d^2}}_{= n(d_1)} e^{-\frac{1}{2}(d_1^2 - 2d_1 \sigma \sqrt{T - t} + \sigma^2 (T - t))}$$
+$$= n(d_1) Ee^{-rT + rt - d_1 \sigma \sqrt{T - t} + \frac{1}{2}\sigma^2 (T - t)}$$
+$$= n(d_1) Ee^{-rT + rt - \ln \left(\frac{S}{E}\right) + rT - rt - \frac{1}{2}\sigma T + \frac{1}{2}\sigma^2 t - \frac{1}{2} \sigma^2 T - \frac{1}{2} \sigma^2 t}$$
+Many terms will cancel out, leaving us with
+$$n(d_1) E \cdot \frac{S}{E} = Sn(d_1)$$
+Therefore, $Sn(d_1) - Ee^{-r(T - t)}n(d_2) = Sn(d_1) - Sn(d_1) = 0$. Finally, this gives us
+$$\frac{\partial C}{\partial S} = \mathcal{N}(d_1).$$
+Recall the expression for Put-Call Parity: $P + S = C + Ee^{-r(T - t)}$. Rewrite as an expression for $P$ and differentiate:
+$$P = C + Ee^{-r(T - t)} - S \Longrightarrow \frac{\partial P}{\partial S} = \frac{\partial C}{\partial S} - 1 = \mathcal{N}(d_1) - 1 = -\mathcal{N}(-d_1).$$
+Whew!
+\end{proof}
+From such a tedious proof, there are some important takeaways that will simplify the next ones:\\
+\vspace{1mm}
+\begin{itemize}
+\item{$d_2 = d_1 - \sigma \sqrt{T - t}$\\
+\vspace{1mm}}
+\item{$Ee^{-r(T - t)} n(d_2) = Sn(d_1)$ which implies $Ee^{-r(T - t)} n(d_2) - Sn(d_1) = 0$ and $Sn(d_1) - Ee^{-r(T - t)} n(d_2) = 0$.\\
+\vspace{1mm}}
+\end{itemize}
+One important observation for $\Delta_C, \Delta_P$ is that 
+$$0 < \Delta_C < 1, \hspace{5mm} -1 < \Delta_P < 0.$$
+Therefore, $\Delta_P < 0$ under any portfolio. This makes sense intuitively; the value of a put option can only decrease with increasing stock price.
+\begin{example}{}{gamma}
+Another commonly used greek is $\Gamma$, or $\frac{\partial^2 C}{\partial S^2}, \frac{\partial^2 P}{\partial S^2}$. Derive the expression for $\Gamma_P$ and $\Gamma_C$ and interpret its value in terms of finance.\\
+
+As always, first choose to derive the expression for a Call option. We already have $\frac{\partial C}{\partial S}$, so we can differentiate that to obtain the second-order derivative.
+$$\frac{\partial^2 C}{\partial S^2} = \frac{\partial}{\partial S} (\mathcal{N}(d_1) = n(d_1) \frac{\partial d_1}{\partial S} = \frac{n(d_1)}{S\sigma \sqrt{T - t}}.$$
+Notice that
+$$\frac{\partial P}{\partial S} = \frac{\partial C}{\partial S} - 1.$$
+If we differentiate again with respect to $S$, the constant vanishes and we are left with
+$$\frac{\partial^2 P}{\partial S^2} = \frac{\partial^2 C}{\partial S^2}$$
+We find that $\Gamma_C = \Gamma_P$!\\
+
+This value measures how fast an option's $\Delta$ changes under a single unit change in the stock price. Since Calls and Puts work in tandem, it is unsurprising that these rates are the same. 
+\end{example}
+\begin{example}{}{delta2}
+Suppose an option is offered at the strike price $E = \$50$, with volatility at 15\% and interest rate at 3.5\%. If there is one year until expiration and $\Delta_C = 0.5$, what is the current stock price? Use this information to then price the value of both a call and put option.\\
+
+$\Delta_C = \frac{1}{2}$ implies $\mathcal{N}(d_1) = 0$. By the symmetry of a normal distribution, it must hold that $\int_{-\infty}^0 e^{-0.5x^2} dx = \frac{1}{2}$. Therefore, $d_1$ = 0 and solve for $S$:
+
+$$\frac{\ln \left(\frac{S}{E} \right) + \left(r + \frac{1}{2}\sigma^2\right)(T - t)}{\sigma \sqrt{T - t}} = 0 \Longleftrightarrow \ln \left(\frac{S}{E} \right) + \left(r + \frac{1}{2}\sigma^2\right)(T - t) = 0$$
+Plug in our known values:
+$$\ln \left(\frac{S}{50}\right) + \left(0.035 + \frac{1}{2}(0.15)^2 \right) = 0.$$
+After rearranging and exponentiating:
+$$S = 50e^{- \left(0.035 + \frac{1}{2}(0.15)^2 \right)} \approx \$47.74.$$
+The price of a call and put option would then be $\$2.61$ and $\$3.15$, respectively.
+\end{example}
+
+\begin{example}{}{delta3}
+As we said, the Black-Scholes pricing model assumes delta-hedging is possible. However, it only works for small changes in $S$. Refer to Example 5.5. Using the same information, we have that $\Delta_C = 0.6368$. If the stock price decreases by \$50, the price of a call is now 10 cents! 
+\end{example}
+
+\begin{example}{}{delta4}
+Consider a portfolio $\Pi$ of European options that hold 4 long put options, 3 short call options, and is short $\alpha$ units of the stock $S$. Mathematically, we define this as
+$$\Pi = 4P_E (S, t) - 3C_E (S, t) - \alpha S.$$
+Suppose we would like to choose $\alpha$ such that the value of the portfolio $\Pi$ is unaffected by small changes in $S$. Derive an expression for the best choice of $\alpha$
+
+$$\frac{\partial \Pi}{\partial S} = 4\frac{\partial P}{\partial S} - 3\frac{\partial C}{\partial S} - \alpha = 0 \Longrightarrow \alpha = 4\Delta_P - 3\Delta_C.$$
+This is \textit{immunizing} a portfolio.
+\end{example}
+\begin{thm}{}{theta}
+Options that follow the Black-Scholes pricing model satisfy
+$$\frac{\partial C}{\partial t} = \theta_C = -\left(Ere^{-r(T - t)}\mathcal{N}(d_2) + Sn(d_1) \cdot \frac{\sigma}{2 \sqrt{T - t}} \right)$$
+$$\frac{\partial P}{\partial t} = \theta_P = -\frac{\sigma}{2\sqrt{T - t}} Sn(d_1) + Ere^{-r(T - t)} \mathcal{N}(-d_2).$$
+\end{thm}
+\vspace{1mm}
+\begin{proof}
+Let $\tau = T - t$. Then,
+$$\frac{\partial C}{\partial t} = Sn(d_1) \frac{\partial d_1}{\partial t} - Ere^{-r(T - t)}\mathcal{N}(d_2) - Ee^{-r(T - t)} n(d_2) \frac{\partial d_2}{\partial t}$$
+Our goal is to show $\frac{\partial C}{\partial t} = -\frac{\partial C}{\partial \tau}.$ It is sufficient enough to show that $\frac{\partial d_1}{\partial t} = -\frac{\partial d_1}{\partial \tau}$.
+$$\frac{\partial d_1}{\partial t} = \frac{-\sigma \sqrt{T - t} \left(r + \frac{1}{2}\sigma^2 \right) + \left(\ln \left(\frac{S}{E} \right) + \left(r + \frac{1}{2}\sigma^2 \right)(T - t)\right) \cdot \frac{1}{2\sigma \sqrt{T - t}}}{\sigma^2 (T - t)}$$
+$$\frac{\partial d_1}{\partial \tau} = \frac{\sigma \sqrt{\tau} \left(r + \frac{1}{2}\sigma^2 \right) - \left(\ln \left(\frac{S}{E} \right) + \left(r + \frac{1}{2}\sigma^2 \right)\tau \right) \cdot \frac{1}{2\sigma \sqrt{T - t}}}{\sigma^2 \tau}$$
+If we substitute $\tau = T - t$ into the second expression, then we have $\frac{\partial d_1}{\partial t} = -\frac{\partial d_1}{\partial \tau}$. We use this relation in the expression for $\frac{\partial C}{\partial \tau}$.
+$$\frac{\partial C}{\partial t} = -Sn(d_1) \frac{\partial d_1}{\partial \tau} - Ere^{-r\tau} \mathcal{N}(d_2) + Ee^{-r(T - t)}n(d_2) \frac{\partial d_2}{\partial \tau}$$
+Recall in the proof for Theorem 6.2 that $d_2 = d_1 - \sigma \sqrt{\tau}$. So, $\frac{\partial d_2}{\partial \tau} = \frac{\partial d_1}{\partial \tau} - \frac{\sigma}{2 \sqrt{\tau}}$ and
+$$\frac{\partial C}{\partial t} = -Sn(d_1) \frac{\partial d_1}{\partial \tau} - Ere^{-r\tau} \mathcal{N}(d_2) + Ee^{-r\tau} n(d_2) \left(\frac{\partial d_1}{\partial \tau} - \frac{\sigma}{2 \sqrt{\tau}} \right)$$
+$$ = \frac{\partial d_1}{\partial \tau} \left( \underbrace{ Ee^{-r(T - t)} n(d_2) - Sn(d_1) }_{= 0 \text{ by Thm 6.2}} \right) - Ere^{-r(T - t)}\mathcal{N}(d_2) - \underbrace{Ee^{-r(T - t)}n(d_2)}_{= Sn(d_1)} \frac{\sigma}{2 \sqrt{\tau}}$$
+Letting $\tau = T- t$,
+$$\frac{\partial C}{\partial t} = -\left(Ere^{-r(T - t)}\mathcal{N}(d_2) + Sn(d_1) \cdot \frac{\sigma}{2 \sqrt{T - t}} \right).$$
+Apply Put-Call Parity to derive $\frac{\partial P}{\partial t}$:
+$$\frac{\partial P}{\partial t} = \frac{\partial C}{\partial t} + Ere^{-r(T - t)}$$
+$$= -\frac{\sigma}{2\sqrt{T - t}} - Ere^{-r(T - t)}\mathcal{N}(d_2) + Ere^{-r(T - t)}$$
+$$= -\frac{\sigma}{2\sqrt{T - t}} + Ere^{-r(T - t)}(1 - \mathcal{N}(d_1))$$
+Since $1 - \mathcal{N}(d_1) = \mathcal{N}(-d_2)$,
+$$\frac{\partial P}{\partial t} = -\frac{\sigma}{2\sqrt{T - t}} + Ere^{-r(T - t)} \mathcal{N}(-d_2).$$
+\end{proof}
+An important corollary is that $\theta_C, \theta_P < 0$ almost always. Therefore, we think of $\theta$ as \textit{time decay}, or how much an option loses value as it approaches expiration. In other words, the \textit{present value} of an option erodes over time. Due to the $\frac{\sigma}{2\sqrt{T - t}}$ term, as $\sqrt{T - t} \to 0$ (approaches expiration), the decay is very fast.\\
+\vspace{2mm}
+\begin{thm}{}{vega}
+Options that follow the Black-Scholes pricing model satisfy
+$$\frac{\partial C}{\partial \sigma} = \frac{\partial P}{\partial \sigma} = \left(S\sqrt{T - t}\right) n(d_1).$$
+\end{thm}
+\begin{proof}
+We take the derivative of $C$ with respect to $\sigma$:
+$$\frac{\partial C}{\partial \sigma} = Sn(d_1) \frac{\partial d_1}{\partial \sigma} - Ee^{-r(T - t)}n(d_2) \frac{\partial d_2}{\partial \sigma}$$
+Since $d_2 = d_1 - \sigma \sqrt{T - t}$, $\frac{\partial d_2}{\partial \sigma} = \frac{\partial d_1}{\partial \sigma} - \sqrt{T - t}.$ Substituting this value:
+$$\frac{\partial C}{\partial \sigma} = Sn(d_1) \frac{\partial d_1}{\partial \sigma} - Ee^{-r(T - t)} n(d_2) \left(\frac{\partial d_1}{\partial \sigma} - \sqrt{T - t} \right)$$
+$$ = \frac{\partial d_1}{\partial \sigma} \left(\underbrace{Sn(d_1) - Ee^{-r(T - t)} n(d_2)}_{= 0 \text{ by Thm. 6.2}} \right) + \left(\sqrt{T - t} \right) \underbrace{Ee^{-r(T - t)}n(d_2)}_{= Sn(d_1)} $$
+Hence, we have shown
+$$\frac{\partial C}{\partial \sigma} = S\left(\sqrt{T - t}\right) n(d_2).$$
+Using Put-Call Parity,
+$$P = C + Ee^{-r(T - t)} - S \Longrightarrow \frac{\partial P}{\partial \sigma} = \frac{\partial C}{\partial \sigma}$$
+since $Ee^{-r(T - t)} - S$ does not depend on $\sigma$.
+\end{proof}
+As said earlier, Vega measures the sensitivity of an option's price due to changes in its implied volatility. All components used in $\nu$ are positive, so $\nu > 0$ consequently. As the option approaches expiration, Vega decreases but remains positive. This is to say, the volatility or uncertainty in the stock decreases as the time to expiration decreases. This should feel intuitive: with less time to expiration, the stock has a lower probability to drastically fluctuate.
+
+\begin{example}{}{vega1}
+A call and put option has price \$5. If $\nu = 10$ and $\sigma$ increases by $3\%$, what is the new price of the two options?\\
+
+Since $\nu$ is equal for both calls and puts, their resulting value will also be equal. The increase in value of both options are given by the differential:
+
+$$\partial P = \frac{\partial P}{\partial \sigma} \partial \sigma = (10)(0.03) = 0.3.$$
+Therefore, the new price of both options is \$5.30.
+\end{example}
+\begin{thm}{}{rho}
+Options that follow the Black-Scholes pricing model satisfy
+$$\frac{\partial C}{\partial r} = \rho_C = (T - t)Ee^{-r(T - t)} \mathcal{N}(d_2), \hspace{5mm} \frac{\partial P}{\partial r} = \rho_P = -(T - t)Ee^{-r(T - t)} \mathcal{N}(-d_2)$$
+\end{thm}
+\begin{proof}
+$$\frac{\partial C}{\partial r} = Sn(d_1) \frac{\partial d_1}{\partial r} + E(T - t)e^{-r(T - t)}\mathcal{N}(d_2) - Ee^{-r(T - t)}n(d_2) \frac{\partial d_2}{\partial r}$$
+We have that $\frac{\partial d_1}{\partial r} = \frac{\partial d_2}{\partial r} = \frac{\sqrt{T - t}}{\sigma}$. Once again, we substitute:
+$$\frac{\partial C}{\partial r} = Sn(d_1) \left(\frac{\sqrt{T - t}}{\sigma} \right) + E(T - t)e^{-r(T - t)}\mathcal{N}(d_2) - Ee^{-r(T - t)} n(d_2) \left(\frac{\sqrt{T - t}}{\sigma} \right)$$
+$$ = \left(\frac{\sqrt{T - t}}{\sigma} \right) \left(\underbrace{S n(d_1) - Ee^{-r(T - t)} n(d_2)}_{= 0 \text{ by Thm 6.2}} \right) + (T - t)Ee^{-r(T - t)} \mathcal{N}(d_2)$$
+$$ = (T - t)Ee^{-r(T - t)} \mathcal{N}(d_2).$$
+Use Put-Call Parity to derive $\rho_P$:
+$$\frac{\partial P}{\partial r} = \frac{\partial C}{\partial r} - (T - t)Ee^{-r(T - t)}$$
+$$ = E(T - t)e^{-r(T - t)} (\mathcal{N}(d_1) - 1) $$
+$$ = -E(T - t)e^{-r(T - t)} \mathcal{N}(-d_2).$$
+We use the fact that $\mathcal{N}(d_1) - 1 = -(1 - \mathcal{N}(d_1)) = -\mathcal{N}(-d_2).$
+\end{proof}
+Rho measures sensitivity of an option's price to perturbations in the risk-free interest rate. Since each component is positive, $\rho_C > 0$ and $\rho_P < 0$.\\
+\vspace{2mm}
+\begin{itemize}
+\item{When interest rates rise, the present value of the strike price decreases, making call options more appealing. This is because you are \textit{borrowing} money to buy the stock later. So, higher rates make it advantageous to delay payment, increasing the price of call options.\\
+\vspace{1mm}}
+\item{When interest rates fall, the present value of the strike price decreases, making put options less appealing. This is because you have the right to \textit{sell} at the strike price and therefore a lower present value reduces the value of a put, making it cheaper.\\
+\vspace{2mm}}
+\end{itemize}
+While we only analyzed each greek separately, do note that they operate together. For example, a call option is guaranteed to lose value over time as we saw from $\theta$ (Theorem 5.6). Therefore, it is up to $\Delta, \nu, \rho$ to \text{break even}, or bring up the call option to where it originally was.\\
+
+\begin{example}{}{greekssum}
+Use the information about Apple stock in Example 5.5. Determine the value of the four greeks ($\Delta, \theta, \nu, \rho$) for calls and puts.\\
+
+Recall that $S = 240, E = 240, \sigma = 0.2, r = 0.05, T - t = 1$. We can summarize our findings in a table:
+\begin{center}
+\begin{tabular}{|c|r|r|}
+	\hline
+	 & Call Option & Put Option \\\hline
+	Delta ($\Delta$) & 0.6368 & $-$0.3632 \\\hline
+	Theta ($\theta$) & $-$15.3937 & $-$3.9789  \\\hline
+	Vega ($\nu$) & 90.0577 & 90.0577  \\\hline
+	Rho ($\rho$) & 127.758 & $-$100.5371   \\\hline
+	Value & \$25.08 & \$13.38 \\\hline
+\end{tabular}
+\end{center}
+What if we set $T - t = 0.25$ (i.e. roughly 3 months until expiration?). Our new values are
+\begin{center}
+\begin{tabular}{|c|r|r|}
+	\hline
+	 & Call Option & Put Option \\\hline
+	Delta ($\Delta$) & 0.5695 & $-$0.4305 \\\hline
+	Theta ($\theta$) & $-$25.138 & $-$13.287  \\\hline
+	Vega ($\nu$) & 47.1456 & 47.1456  \\\hline
+	Rho ($\rho$) & 31.3986 & $-$27.8561  \\\hline
+	Value & \$11.08 & \$8.09 \\\hline
+\end{tabular}
+\end{center}
+Here are some key observations:\\
+
+\begin{itemize}
+\item{Since $S = E$, $\mathcal{N}(d_1) \to 0.5$ because $d_1 \to 0$. This is the only possible condition for $\Delta_C$ to converge to 0.5. Likewise, $\Delta_P$ converges to $-0.5$. If $S \leq E$, then $\Delta$ will converge to either 0 or 1 for a Call and -1 or 0 for a Put.\\}
+\item{Since $T - t$ decreases, $\theta$ increases in magnitude for both options, as expected.\\}
+\item{$\nu$ decreases because $T - t$ decrease. If we took $T - t \to 0$, then $\nu \to 0$.\\}
+\item{Similarly, $\rho$ decreases in magnitude and will converge to 0 if $T - t \to 0$.\\}
+\item{The time decay outweighs the significance in the changes of each greek, decreasing the value of both options.}
+\end{itemize}
+\end{example}
+\pagebreak
+\section{American Options Pricing}
+So far, we derived the Black-Scholes model for \textbf{European} options. The model works under the assumption that one cannot exercise an option until expiration (by definition of a European option). However, American options can be exercised early$-$at any point up to and including expiration. The question goes without saying: can we model American options using Black-Scholes? What we find is that American options will closely match the Black-Scholes model with some minor differences. 
+
+\begin{thm}{}{amoptions}
+The \textit{value} of an American option is the value of a European option (from Black-Scholes) plus the value of exercising early.\\
+
+An early exercise of an American option always produces a value of 
+\begin{itemize}
+\item{$S - E$ for early exercise of an American call}
+\item{$E - S$ for early exercise of an American put}
+\end{itemize}
+\end{thm}
+\vspace{1mm}
+The value of American options, when exercised early, is nothing more than its intrinsic value. Also, as implied by the theorem:\\
+\vspace{1mm}
+\begin{itemize}
+\item{An early exercise of an American option is \textbf{NEVER} optimal. It is always worth exercising at expiration. If $S < E$, the maximum loss is the premium. For this reason, the pricing for an American call is that of a European call.\\}
+\item{An early exercise of an American put is \textbf{sometimes} optimal, namely if it is deep in the money and there is a long time until expiration (higher probability of put value to not go out of the money). For this reason, this is no analytic (closed-form) solution for an American put.\\
+\vspace{1mm}}
+\end{itemize}
+
+\begin{example}{}{amopprob1}
+Suppose the European put option $P_{35}(20) = 10$ suddenly becomes an American option. Are there arbitrage opportunities?\\
+
+For $P_{35}(20)$, $E = 35$ and $S = 20$. We can exercise the right to sell the stock $S$ at $E = \$35$ after buying it for $\$20$ for a profit of $\$15$. The total arbitrage is the profit minus the premium paid = $\$5.$
+\end{example}
+
+\begin{example}{}{amopprob2}
+Suppose the European put option $P_{35}(20) = 25$ suddenly becomes an American option. Are there arbitrage opportunities?\\
+
+No. For $P_{35}(20) = 25$, the cost of the option ($\$25$) is greater than the immediate profit from buying and exercising the option.
+
+\end{example}
+
+\begin{example}{}{amopprob3}
+Suppose the European Call $C_{60}(80) = 10$ suddenly becomes an American option. Are there arbitrage opportunities?\\
+
+For $C_{60}(80) = 10$, we can immediately exercise the option and sell the stock for $\$80$ for a profit of $\$20$. Taking the premium into account, an arbitrage of $\$10.$ exists.
+\end{example}
+
+\begin{example}{}{amoprob4}
+Suppose the European Call $C_{60}(80) = 25$ suddenly becomes an American option. Are there arbitrage opportunities?\\
+
+No. The premium paid outweighs the cost of immediately exercising the option and selling the stock.
+\end{example}
+
+While the scenarios given in Examples 7.2$-$7.5 would never happen in an open market, it helps us understand how arbitrage is conditioned for American options.
+
+\begin{example}{}{amopgraph}
+Consider a Call and Put option with $E = 50$, $r = 5\%$, $\sigma = 20\%, T - t = 1$. We present how American and European options are graphed compared to each other.
+
+\begin{center}
+\includegraphics[width = 0.55\textwidth]{amopcall}
+\end{center}
+
+Here, American options must stay above $S - E$ to ensure that no early exercise and ultimately arbitrage opportunities happen. This is why American options also follow the Black-Scholes model: it is nonsensical to exercise early.
+
+\begin{center}
+\includegraphics[width = 0.55\textwidth]{amopput}
+\end{center}
+As stated in Theorem 7.1, it is optimal to early exercise is a put is deep in the money (i.e. intrinsic value greater than European put option price) with a long time until expiration. For example, exercising when $S = 20$ is great because you can take the guaranteed intrinsic value without having to hold onto an option that is priced lower.\\
+
+If we take $S = \$20$ AND an American put is mispriced at $\$20$ (by the European Put curve) AND its intrinsic value is $\$30$, we can buy an American put at $\$20$ and immediately exercise the right to sell it for $\$30$ for an arbitrage of $\$10$ without risk.
+\end{example}
+To conclude, there are two major takeaways from this section:
+\begin{itemize}
+\item{The value of a European put option $P_E (S, t)$ can sometimes be at any time be less than its intrinsic value $E - S$.\\
+\vspace{1mm}}
+\item{The value of a European call option can never at any time be less than its intrinsic value $S - E$.}
+\end{itemize}
+\pagebreak
+\section{Exploring Volatility and Miscellaneous Information}
+We want to observe how volatility in stocks do not agree with the Black-Scholes model. Recall that Black-Scholes assumes a constant volatility and risk-free rate over time. Before doing so, we introduce some definitions:
+\begin{defn}{}{vol}
+We use historical, implied, and realized volatility to analyze the behavior of stock prices.
+\begin{enumerate}
+\item{\textit{Historical volatility} measures how much the stock price has varied in the past.}
+\item{\textit{Implied volatility} reflects the market's expectation of future price fluctuations, derived from option prices.}
+\item{\textit{Realized volatility} is the actual observed fluctuations of a stock over a given period.}
+\end{enumerate}
+\end{defn}
+Implied volatility is found by using the actual price of an option and solving for $\sigma$. Realized volatility is derived from historical volatility. For example, the annualized volatility and mean return is given by
+$$\hat{\sigma} = \hat{\sigma}_d \sqrt{252}, \hspace{5mm} \hat{\mu} = 252\hat{\mu}_d.$$
+We use $\sqrt{252}$ as 252 is roughly the number of \textit{trading days} per year, or aggregate time in which the market is open per year. $\hat{\sigma}_d$ is derived from a recursive function $R_n$, which computes the percentage increase in stock price compared to the previous day.
+$$R_n = \frac{S(n) - S(n - 1)}{S(n - 1)} \hspace{5mm} 1 \leq n \leq N.$$
+We then compute the logarithmic return to find the annualized volatility:
+$$\hat{\mu}_d = \frac{1}{N}\sum_{n = 1}^{N} \ln(1 + R_n), \hspace{5mm} \hat{\sigma}_d = \sqrt{\frac{1}{N - 1} \sum_{n = 1}^N (\ln (1 + R_n) - \hat{\mu}_d)^2}$$
+Historical volatility is computed through the standard deviation of annualized returns.
+\begin{example}{}{histvol}
+The historical price, in millions from 2018-2023 of a house is shown below:
+\begin{center}
+\begin{tabular}{c|c|c|c|c|c|c}
+	Year & 2018 & 2019 & 2020 & 2021 & 2022 & 2023\\
+	\hline
+	Price & 3.1 & 3.4 & 3.9 & 4.3 & 4.7 & 5.4
+\end{tabular}
+\end{center}
+Assume the Black-Scholes framework for options pricing holds and the risk-free annual continuously compounded interest rate is 2.2\%. The owner of the home wants to negotiate the price of selling a European option to buy his home for \$5.4 million on a fixed date in exactly 3 years to a prospective buyer. What price should the owner ask for this option?\\
+
+Since we are given a series of past prices, we want to compute the historical volatility. It is more useful to write code that will generate these results, especially when dealing with a long list of returns.\\
+
+\begin{center}
+	\includegraphics[width = 0.5\textwidth]{historicalvol}
+\end{center}
+We obtain $\sigma = 0.0249$; we do not have to multiply by $\sqrt{252}$ because we are already given annualized data. Now, plug in the given into the Black-Scholes equation for a call, where $S = 5.4 \times 10^6, E = 5.4 \times 10^6, r = 0.022, T - t = 3, \sigma = 0.0249$. The owner should ask for a price of \$351,014.
+\end{example}
+
+\begin{example}{}{vol2}
+As of March 15, 2025, Apple's (APPL) 10 most recent daily stock prices are shown below:
+\begin{center}
+\begin{tabular}{c|c|c|c|c|c|c|c|c|c|c}
+	Day & Mar 3 & Mar 4 & Mar 5 & Mar 6 & Mar 7 & Mar 10 & Mar 11 & Mar 12 & Mar 13 & Mar 14\\
+	\hline
+	Price & 238.03 & 235.93 & 235.74 & 235.33 & 239.07 & 227.48 & 220.84 & 216.98 & 209.68 & 213.49 
+\end{tabular}
+\end{center}
+Compute the annualized volatility and mean returns for APPL. Hoping the stock bounces back up, you want to price a European-style call option at a strike price equivalent to the mean stock price. Following a Black-Scholes model, what should this option be priced if $r = 0.037$ with 4 weeks until expiration? Use the stock price for March 14th.\\
+
+Compute the historical volatility as we did in the previous example, but multiply by $\sqrt{252}$ to obtain the annualized volatility. We get $\hat{\sigma} = 0.3624$. The annualized mean return is calculated through the code
+\begin{center}
+	\includegraphics[width = 0.6\textwidth]{meanreturns}
+\end{center}
+Multiplying by 252, $\hat{\mu} = -2.74$. The mean stock over the past 10 days is \$227.26 which will be our strike price. Letting $T - t = \frac{28}{365}$, we plug in the given parameters into the Black-Scholes model and find that we should price the call option at \$3.76.\\
+
+Additionally, we may want to look at the main greeks to analyze the behavior of the option.
+$$\Delta_C = 0.293, \hspace{5mm} \theta_C = -50.226, \hspace{5mm} \nu_C = 20.343, \hspace{5mm} \rho_C = 4.513$$
+$\theta_C$ is noticeably high. If we don't observe an increase in stock price (as we hope in this example), volatility, or risk-free rate, the option's value will quickly erode over the 4 weeks. However, even a 2\% increase in volatility could almost counteract $\theta_C$.
+\end{example}
+\pagebreak
+Now, we look at two types of plots that measure implied volatility:
+\begin{defn}{}{volplots}
+\textit{Volatility smiles} measure how the implied volatility changes with respect to increasing strike prices.
+\textit{Volatility term structures} measure how the implied volatility changes as the time to expiration increases.
+\end{defn}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\textwidth]{volsmile}
+\hspace{1mm}
+\includegraphics[width=0.49\textwidth]{volterm}
+\end{figure}
+
+In accordance with the Black-Scholes option pricing theory, implied volatility should be constant with respect to both of these parameters, hence yielding straight lines (by eliminating risk). This is never true, however. Shown above is what a volatility smile and term structure sketch could look like: this volatility smile suggests that implied volatility increases when an option grows deep in or out of the money and volatility term structure suggests that implied volatility increases as time to expiration increases.
+
+\begin{example}{}{volplots2}
+Plotted on the following page is the volatility smile and term structure for APPL, using 6 strike prices (232.5, 235, 237.5, 240, 242.5, 245) and time to expiration (7, 14, 21, 28, 35, 41 days). The option prices for calls and puts are also given:
+
+\begin{center}
+\begin{tabular}{c|c|c|c|c|c|c}
+	Strike & \$232.5 & \$235 & \$237.5 & \$240 & \$242.5 & \$245\\
+	\hline
+	Call & \$8.4 & \$6.58 & \$4.95 & \$3.53 & \$2.39 & \$1.53\\
+	\hline
+	Put & \$1.69 & \$2.35 & \$3.20 & \$4.30 & \$5.65 & \$7.30
+\end{tabular}
+\\
+\vspace{2mm}
+\begin{tabular}{c|c|c|c|c|c|c}
+	Time to Expiration (days) & 7 & 14 & 21 & 28 & 35 & 41\\
+	\hline
+	Call Option& \$3.53 & \$5.10 & \$6.30 & \$7.28 & \$8.03 & \$8.70\\
+	\hline
+	Put Option & \$4.30 & \$5.65 & \$6.62 & \$7.4 & \$8.00 & \$8.45
+\end{tabular}
+\end{center}
+The information was gathered on March 7, 2025, when APPL's stock price was roughly \$239.\\
+\begin{enumerate}
+
+\item{As the strike price increases from \$232.50, there is a downward trend in implied volatility. Therefore, out of the money calls and in the money puts have lower implied volatility, whereas in the money calls and out of the money puts have higher implied volatility. This is known as an \textit{inverse volatility skew}, or volatility smirk.}
+\item{Further from expiration, the implied volatility mostly increases for calls and follows a decay-like trend for puts. This is due to the decrease in uncertainty which typically causes an increase in implied volatility for calls (though its effect is more nuanced) and decrease for puts.}
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.49\textwidth]{volsmileappl}
+\hspace{1mm}
+\includegraphics[width=0.49\textwidth]{termstrucappl}
+\end{figure}
+\end{example}
+
+\begin{thm}{}{prob}
+The probability for an option to finish in the money is given by
+$$P(S(t) > E) = \mathcal{N}(d_2) \text{ for a call } \hspace{5mm} P(S(t) < E) = \mathcal{N}(-d_2) \text{ for a put }$$
+
+where $d_2$ is given by
+$$\frac{\ln \left(\frac{S(t)}{E} \right) + \left(\mu - \frac{1}{2}\sigma^2 \right)(T - t)}{\sigma \sqrt{T - t}}$$
+\end{thm}
+\vspace{2mm}
+The derivation uses the standard normal distribution from Definition 1.8, using $\mu_1 = \ln (S(t)) + \left(\mu - \frac{1}{2} \sigma^2 \right)(T - t)$ and $\sigma_1^2 = \sigma^2 (T - t) \Longrightarrow \sigma_1 = \sigma \sqrt{T - t}$. $\mu$ and $r$ are equivalent in this case since in risk-neutral pricing, the expected return of the asset is interchangeable with the risk-free rate.\\
+\vspace{2mm}
+Additionally, we use the fact that $P(S(t) < E) = 1 - P(S(t) > E$ and the property of normal distributions $1 - \mathcal{N}(d_2) = \mathcal{N}(-d_2)$.
+
+\begin{example}{}{prob2}
+Let $\mu = 0.0556, \sigma = 0.33, r = 0.0556, S(t) = 105$ and no dividends are in play. A put option is priced with strike price $E_P =$ \$92 and one year until expiration. Assuming Geometric Brownian Motion holds, what is the strike price of a call with the same probability of finishing in the money as the put option?\\
+
+The term $\left(\mu - \frac{1}{2} \sigma^2 \right)(T - t)$ will vanish as it equals zero. Therefore, we have
+$$-d_2 = -\frac{\ln \left(\frac{105}{92} \right)}{0.0556} \approx -0.3965 \Longrightarrow P(S(t) < 92) \approx \mathcal{N}(-0.3965) \approx 34.56\%$$
+A call with the same probability has $d_2 = 0.3965$. To find a $E_C$ that finishes in the money with the same probability, we first require $E_C > 105$ and so $\ln \frac{105}{E_C} < 0$, further implying
+$$\frac{1}{\sigma} \cdot \ln \frac{105}{E_C} = -0.3965 \Longrightarrow E_C \approx \$119.84$$
+\end{example}
+
+\begin{aside}
+\textit{Aside}: If we have a dividend paying stock $S$, then we replace $S(t)$ with
+$$S(t) e^{-p(T - t)}$$
+in the Black-Scholes model. \textit{Dividends} are the percentage of a company's earnings that is paid to its shareholders as their share of profits.
+\end{aside}
+\pagebreak
+\section{Code}
+The code for each function was developed in MATLAB.
+\subsection{Optimal Bets}
+The function returns how much to bet to each individual and the profit for a guaranteed, fixed arbitrage.
+\end{flushleft}
+\begin{center}
+\includegraphics[width = 0.6\textwidth]{optbetsfunc}
+\end{center}
+\begin{flushleft}
+\subsection{Likelihood Estimator}
+Returns the likelihood one is to earn an interval of money after playing a game n times. inputs the payoff and probability of each outcome, number of times the game is played, the baseline, and whether you are looking for the likelihood below/above the baseline, or between 2 baselines. For below/above, input [baseline, 0]. For between, input [baseline1, baseline2].
+\end{flushleft}
+\begin{center}
+\includegraphics[width = 0.7\textwidth]{likelihoodest}
+\end{center}
+\pagebreak
+\begin{flushleft}
+\subsection{Horse Betting Payoffs}
+Given the total amount of dollar bets made on each horse (stored as an array) and the desired return per dollar bet, returns the payoffs for each horse.
+\end{flushleft}
+\begin{center}
+\includegraphics[width = 0.6\textwidth]{horsebettingfunc}
+\end{center}
+\begin{flushleft}
+
+\subsection{Mean Returns and Historical Volatility}
+Given a set of stock prices, return the mean return $\mu$ and historical volatility $\sigma$. You may need to multiply by $252$ (for $\mu$) or $\sqrt{252}$ (for $\sigma$) if the prices are not annualized.
+
+\end{flushleft}
+\begin{center}
+\includegraphics[width = 0.6\textwidth]{returnsvol}
+\end{center}
+\begin{flushleft}
+
+\pagebreak
+\section{References}
+Some examples, definitions, and theorems are taken from Donald G Saari's, \textit{Mathematics of Finance $-$ An Intuitive Introduction}.\\
+\vspace{2mm}
+All figures and plots, unless otherwise stated, were designed by me. If you want to reproduce the MATLAB plots, please refer to my GitHub.\\
+\vspace{2mm}
+
+\url{https://github.com/ryangomberg/math176}
+\end{flushleft}
+\end{document}
