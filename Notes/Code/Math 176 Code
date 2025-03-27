@@ -11,20 +11,20 @@ sol_x = double(solve(eqn1 == eqn2, x));
 sol_y = double(subs(eqn1, x, sol_x));
 
 figure;
-fplot(eqn1, [-100, 100], 'r', 'LineWidth', 1.5); % Plot first equation
+fplot(eqn1, [-100, 100], 'r', 'LineWidth', 1.5); 
 hold on;
-fplot(eqn2, [-100, 100], 'b', 'LineWidth', 1.5); % Plot second equation
+fplot(eqn2, [-100, 100], 'b', 'LineWidth', 1.5); 
 grid on;
 
-xlim([0, 100]); % Adjust y-axis limits to reduce scaling
-ylim([0, 150]); % Adjust y-axis limits to reduce scaling
+xlim([0, 100]); 
+ylim([0, 150]); 
 
 plot(sol_x, sol_y, 'ko', 'MarkerSize', 10, 'MarkerFaceColor', 'k');
 
 text(sol_x + 5, sol_y, '(x*, p*) = ($55.94, $17.47)', 'FontSize', 9, 'Color', 'k');
 
-plot([sol_x sol_x], [0 sol_y], 'k--'); % Vertical line to x-axis
-plot([0 sol_x], [sol_y sol_y], 'k--'); % Horizontal line to y-axis
+plot([sol_x sol_x], [0 sol_y], 'k--'); 
+plot([0 sol_x], [sol_y sol_y], 'k--'); 
 
 xlabel('Amount to bet');
 ylabel('Profit');
@@ -156,9 +156,9 @@ figure;
 histogram(dw2, 'Normalization', 'pdf', 'EdgeColor', 'none');
 hold on;
 x = linspace(0, max(dw2)*2, 0.25);
-mu = dt;  % Expected value E[dw^2] = dt
-sigma = sqrt(2 * dt^2); % VAR(dw^2) = 2(dt)^2
-pdf_dw2 = gampdf(x, 1/2, 2*dt); % Chi-squared with 1 degree of freedom
+mu = dt; 
+sigma = sqrt(2 * dt^2); 
+pdf_dw2 = gampdf(x, 1/2, 2*dt); 
 plot(x, pdf_dw2, 'g', 'LineWidth', 2);
 hold off;
 xlabel('dw^2');
@@ -233,15 +233,15 @@ legend(["American Put Option Price", "European Put Option Price", "Intrinsic Val
 
 d12 = (log(S2/E) + (r + 0.5 * sigma2^2) * T2) ./ (sigma2 * sqrt(T2));
 d22 = d1 - sigma2 * sqrt(T2);
-C2 = S2 .* normcdf(d12) - E * exp(-r * T2) * normcdf(d22); % European call price
+C2 = S2 .* normcdf(d12) - E * exp(-r * T2) * normcdf(d22); 
 
 intrinsic_value2 = max(S2 - E, 0);
 
 figure;
 hold on;
 grid on;
-plot(S2, C2, 'k', 'LineWidth', 2); % Black-Scholes Call Price
-plot(S2, intrinsic_value2, 'm', 'LineWidth', 2); % Intrinsic Value
+plot(S2, C2, 'k', 'LineWidth', 2); 
+plot(S2, intrinsic_value2, 'm', 'LineWidth', 2); 
 
 xlabel('Stock Price');
 ylabel('Value of Option');
@@ -249,3 +249,4 @@ title('Black Scholes 2D Plot');
 legend('American & European call option', 'Price = S - E', 'Location', 'NorthWest');
 
 hold off;
+
